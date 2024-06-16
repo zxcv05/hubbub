@@ -1,9 +1,14 @@
-extern crate tumult;
+extern crate hubbub;
 
-use tumult::{context::Context, prelude::*};
+use hubbub::prelude::*;
 use tokio::sync::Mutex;
 use std::{process::exit, sync::Arc};
 
+
+/**
+ * Note; as of 0.2.0 the error message for giving a bad token is really bad
+ * If it freezes for a minute then prints "Tungstenite(AlreadyClosed)" then assume your token is bad :)
+ */
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -23,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
         }
     )).await?;
     
-    client.token(std::env::var("TOKEN")?).await;
+    client.token(std::env::var("TOKEN").expect("Make sure to set the \"TOKEN\" env variable")).await;
     client.login().await.expect("Error while logging in");
     client.run().await.expect("Error while running");
 

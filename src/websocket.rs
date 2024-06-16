@@ -49,8 +49,17 @@ impl StreamCtrl {
 
         let rxq = _rxq.clone();
         tokio::task::spawn(async move {
-            loop {                
-                if let Some(msg) = rx.try_next().await.expect("Couldn't next rx") {
+            loop {
+                let resp = match rx.try_next().await {
+                    Ok(v) => v,
+                    Err(e) => {
+                        let mut rxq = rxq.lock().await;
+                        rxq.close().await.expect("Couldn't close sink");
+                        panic!("{e:?}");
+                    },
+                };
+
+                if let Some(msg) = resp {
                     let mut rxq = rxq.lock().await;
                     rxq.push_back(msg);
                 }
@@ -73,11 +82,14 @@ impl StreamCtrl {
                 while let Some(msg) = txq.pop_front() {
                     tx.feed(msg).await.expect("Couldn't feed tx");
                 }
+                
+                if let Err(e) = tx.flush().await {
+                    txq.close().await.expect("Couldn't close stream");
+                    panic!("{e:?}");
+                }
 
                 drop(txq);
 
-                tx.flush().await.expect("Couldn't flush tx");
-             
                 std::thread::sleep(Duration::from_millis(5));
             }
         });
