@@ -73,7 +73,7 @@ impl Context {
         };
 
         let builder = match body {
-            Some(b) => builder.body(serde_json::to_vec(&b)?),
+            Some(b) => builder.body(serde_json::to_vec(&b)?).header("Content-Type", HeaderValue::from_str("application/json")?),
             None => builder,
         };
 
