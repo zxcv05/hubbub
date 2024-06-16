@@ -5,7 +5,7 @@ use serde_json::Value as JSON;
 
 use crate::types::{guild::CachedGuild, user::{BotUser, User}};
 
-static BASE_URL: &'static str = "https://discord.com/api/";
+static BASE_URL: &'static str = "https://discord.com/";
 
 
 #[derive(Debug)]
@@ -59,7 +59,7 @@ impl Context {
     }
 
     pub async fn request(&mut self, method: Method, endpoint: &str, body: Option<JSON>) -> Result<JSON> {
-        let builder = self.client.request(method, Url::parse(BASE_URL)?.join(endpoint)?);
+        let builder = self.client.request(method, Url::parse(BASE_URL)?.join(format!("/api/{}", endpoint).as_str())?);
 
         let builder = match &self.auth {
             Some(a) => builder.header("Authorization", HeaderValue::from_str(a.as_str())?),
