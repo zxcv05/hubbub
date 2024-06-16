@@ -55,8 +55,8 @@ impl Default for Context {
 
 #[derive(Debug)]
 pub struct Response {
-    status: StatusCode,
-    content: JSON
+    pub status: StatusCode,
+    pub content: JSON
 }
 
 impl Context {
