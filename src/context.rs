@@ -58,8 +58,8 @@ impl Context {
         self.auth = Some(token);
     }
 
-    pub async fn request(&mut self, method: Method, endpoint: &'static str, body: Option<JSON>) -> Result<JSON> {
-        let builder = self.client.request(method, Url::parse(&BASE_URL)?.join(&endpoint)?);
+    pub async fn request(&mut self, method: Method, endpoint: &str, body: Option<JSON>) -> Result<JSON> {
+        let builder = self.client.request(method, Url::parse(BASE_URL)?.join(endpoint)?);
 
         let builder = match &self.auth {
             Some(a) => builder.header("Authorization", HeaderValue::from_str(a.as_str())?),
