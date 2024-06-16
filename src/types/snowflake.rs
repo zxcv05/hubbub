@@ -5,7 +5,7 @@ use serde::{de, Deserialize, Deserializer, Serialize};
 use crate::prelude::Error;
 
 
-pub static DISCORD_EPOCH: u128 = 14200070400000;
+pub static DISCORD_EPOCH: u128 = 1420070400000;
 
 
 #[derive(Debug)]
