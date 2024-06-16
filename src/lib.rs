@@ -36,7 +36,8 @@ impl<F> Client<F> where
     }
 
     pub async fn token(&mut self, token: String) {
-        self.ws.lock().await.token(token);
+        self.ws.lock().await.token(token.clone());
+        self.ctx.lock().await.set_auth(token);
     }
 
     pub async fn login(&mut self) -> Result<()> {

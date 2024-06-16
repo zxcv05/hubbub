@@ -58,11 +58,11 @@ impl Context {
         self.auth = Some(token);
     }
 
-    pub fn request(&mut self, method: Method, endpoint: String, body: Option<JSON>) -> Result<JSON> {
+    pub async fn request(&mut self, method: Method, endpoint: &'static str, body: Option<JSON>) -> Result<JSON> {
         let builder = self.client.request(method, Url::parse(&BASE_URL)?.join(&endpoint)?);
 
         let builder = match &self.auth {
-            Some(a) => builder.bearer_auth(a),
+            Some(a) => builder.header("Authorization", HeaderValue::from_str(a.as_str())?),
             None => builder,
         };
 
@@ -71,9 +71,8 @@ impl Context {
             None => builder,
         };
 
-        let req = builder.build()?;
-
-        Ok(serde_json::from_slice(req.body().unwrap().as_bytes().unwrap())?)
+        let res = self.client.execute(builder.build()?).await?;
+        Ok(serde_json::from_slice(&res.bytes().await?)?)
     }
 }
 

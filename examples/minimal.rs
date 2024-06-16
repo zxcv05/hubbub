@@ -18,8 +18,11 @@ async fn main() -> anyhow::Result<()> {
                 "READY" => {
                     println!("Bot ready!");
                     
-                    let ctx = ctx.lock().await;
+                    let mut ctx = ctx.lock().await;
                     println!("Logged in as {}", ctx.user.as_ref().unwrap().username);
+
+                    let resp = ctx.request(http::Method::GET, "users/@me", None).await.expect("Couldn't send API request");
+                    println!("{resp:#?}");
                     
                     exit(0);
                 },
