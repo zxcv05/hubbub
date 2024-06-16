@@ -7,6 +7,7 @@ pub mod websocket;
 
 use anyhow::Result;
 use context::{Context, ResumeInfo};
+use error::Error;
 use futures_util::Future;
 use tokio::sync::Mutex;
 use types::gateway::Ready;
@@ -35,9 +36,23 @@ impl<F> Client<F> where
         })
     }
 
-    pub async fn token(&mut self, token: String) {
+    pub async fn token(&mut self, token: String) -> Result<()> {
         self.ws.lock().await.token(token.clone());
-        self.ctx.lock().await.set_auth(token);
+        
+        let mut ctx = self.ctx.lock().await;
+        ctx.set_auth(token);
+
+        match ctx.request(http::Method::GET, "users/@me", None).await {
+            Ok(r) => {
+                // If return value was an error
+                if r.get("code").is_some() && r.get("message").is_some() {
+                    Err(Error::InvalidToken(r.get("message").unwrap().as_str().unwrap().to_string()).into())
+                } else {
+                    Ok(())
+                }
+            },
+            Err(e) => Err(e.context("Failed validating token")),
+        }
     }
 
     pub async fn login(&mut self) -> Result<()> {

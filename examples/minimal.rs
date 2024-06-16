@@ -5,11 +5,6 @@ use tokio::sync::Mutex;
 use std::{process::exit, sync::Arc};
 
 
-/**
- * Note; as of 0.2.1 the error message for giving a bad token is really bad
- * If it freezes for a minute then prints "Tungstenite(AlreadyClosed)" then assume your token is bad :)
- */
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let mut client = Client::new(Box::from(
@@ -31,7 +26,8 @@ async fn main() -> anyhow::Result<()> {
         }
     )).await?;
     
-    client.token(std::env::var("TOKEN").expect("Make sure to set the \"TOKEN\" env variable")).await;
+    let token = std::env::var("TOKEN").expect("Make sure to set the \"TOKEN\" env variable");
+    client.token(token).await.expect("Couldn't set token");
     client.login().await.expect("Error while logging in");
     client.run().await.expect("Error while running");
 

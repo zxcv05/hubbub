@@ -17,7 +17,7 @@ Rust library for creating discord self-bots (very early in development)
 async fn main() -> anyhow::Result<()> {
     let mut client = Client::new(/* Event handler */).await?;
 
-    client.token(/* Token */).await;
+    client.token(/* Token */).await?;
     client.login().await?;
     client.run().await?;
 }
