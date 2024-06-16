@@ -1,6 +1,6 @@
-extern crate rustybot;
+extern crate tumult;
 
-use rustybot::{context::Context, prelude::*};
+use tumult::{context::Context, prelude::*};
 use tokio::sync::Mutex;
 use std::{process::exit, sync::Arc};
 
@@ -8,7 +8,7 @@ use std::{process::exit, sync::Arc};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let mut client = Client::new(Box::from(
-        |ctx: Arc<Mutex<Context>>, ws: Arc<Mutex<Websocket>>, msg: DiscordMessage| async move {
+        |ctx: Arc<Mutex<Context>>, _ws: Arc<Mutex<Websocket>>, msg: DiscordMessage| async move {
             match msg.event.as_ref().unwrap().as_str() {
                 "READY" => {
                     println!("Bot ready!");

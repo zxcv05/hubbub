@@ -14,7 +14,6 @@ use websocket::{DiscordMessage, Websocket};
 use std::{cmp::max, collections::VecDeque, sync::Arc, time::Duration};
 
 
-
 pub type Handler<F> = dyn Fn(Arc<Mutex<Context>>, Arc<Mutex<Websocket>>, DiscordMessage) -> F;
 
 pub struct Client<F> where
