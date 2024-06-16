@@ -72,7 +72,7 @@ impl Context {
         };
 
         let res = self.client.execute(builder.build()?).await?;
-        Ok(serde_json::from_slice(&res.bytes().await?)?)
+        Ok(serde_json::from_slice::<JSON>(&res.bytes().await?).unwrap_or(JSON::Null))
     }
 }
 
