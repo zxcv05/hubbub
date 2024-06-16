@@ -1,5 +1,5 @@
 use anyhow::Result;
-use http::{HeaderMap, HeaderValue, Method};
+use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use reqwest::Url;
 use serde_json::Value as JSON;
 
@@ -53,12 +53,18 @@ impl Default for Context {
     }
 }
 
+#[derive(Debug)]
+pub struct Response {
+    status: StatusCode,
+    content: JSON
+}
+
 impl Context {
     pub fn set_auth(&mut self, token: String) {
         self.auth = Some(token);
     }
 
-    pub async fn request(&mut self, method: Method, endpoint: &str, body: Option<JSON>) -> Result<JSON> {
+    pub async fn request(&mut self, method: Method, endpoint: &str, body: Option<JSON>) -> Result<Response> {
         let builder = self.client.request(method, Url::parse(BASE_URL)?.join(format!("/api/{}", endpoint).as_str())?);
 
         let builder = match &self.auth {
@@ -72,7 +78,10 @@ impl Context {
         };
 
         let res = self.client.execute(builder.build()?).await?;
-        Ok(serde_json::from_slice::<JSON>(&res.bytes().await?).unwrap_or(JSON::Null))
+        Ok(Response {
+            status: res.status(),
+            content: serde_json::from_str(res.text().await?.as_str()).unwrap_or(JSON::Null)
+        })
     }
 }
 
