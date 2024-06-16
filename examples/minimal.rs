@@ -6,7 +6,7 @@ use std::{process::exit, sync::Arc};
 
 
 /**
- * Note; as of 0.2.0 the error message for giving a bad token is really bad
+ * Note; as of 0.2.1 the error message for giving a bad token is really bad
  * If it freezes for a minute then prints "Tungstenite(AlreadyClosed)" then assume your token is bad :)
  */
 
