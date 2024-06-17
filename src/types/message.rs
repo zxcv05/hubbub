@@ -40,8 +40,8 @@ pub struct Attachment {
     pub duration_secs: Option<f64>,
     pub waveform: Option<String>, // base64 encoded bytearray
 
-    pub ephemeral: bool,
-    pub flags: u8,
+    pub ephemeral: Option<bool>,
+    pub flags: Option<u8>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
