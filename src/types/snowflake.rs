@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::str::FromStr;
 
 use serde::{de, Deserialize, Deserializer, Serialize};
@@ -8,9 +9,14 @@ use crate::prelude::Error;
 pub static DISCORD_EPOCH: u128 = 1420070400000;
 
 
-#[derive(Debug)]
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Clone, Hash)]
 pub struct Snowflake(u64);
 
+impl Display for Snowflake {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl From<String> for Snowflake {
     fn from(value: String) -> Self {
         Self(u64::from_str_radix(value.as_str(), 10).expect("Couldn't parse snowflake from string"))
@@ -18,11 +24,11 @@ impl From<String> for Snowflake {
 }
 
 impl FromStr for Snowflake {
+    type Err = Error;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(Self(u64::from_str_radix(s, 10).expect("Couldn't parse snowflake from string")))
     }
-    
-    type Err = Error;
 }
 
 impl<'de> Deserialize<'de> for Snowflake {

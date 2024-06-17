@@ -10,4 +10,7 @@ pub mod sticker;
 pub mod user;
 
 mod snowflake;
+mod message;
+mod poll;
+
 pub use snowflake::Snowflake;

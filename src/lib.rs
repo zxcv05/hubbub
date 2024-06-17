@@ -90,21 +90,28 @@ impl<F> Client<F> where
 
             let mut seq = ws.sequence;
             while let Some(msg) = ws.try_read().await? {
+                log::trace!("Received message: {msg:?}");
+
                 match msg.op {
                     0 => {
+                        log::debug!("Got dispatch event #{}: {}", msg.seq.as_ref().unwrap(), msg.event.as_ref().unwrap());
                         seq = max(seq, msg.seq);
                         dispatch_queue.push_back(msg)
                     },
                     1 => {
+                        log::debug!("Gateway asked for heartbeat");
                         ws.heartbeat().await?;
                     }
                     7 => {
+                        log::debug!("Gateway asked for reconnect");
                         let ctx = self.ctx.lock().await;
                         let seq = ws.sequence;
                         *ws = Websocket::new_with(&(ctx.resume_info.as_ref().unwrap().url), seq.unwrap()).await?;
                         ws.resume(ctx.resume_info.as_ref().unwrap()).await?;
                     }
-                    11 => {}
+                    11 => {
+                        log::debug!("Gateway acknowledged heartbeat");
+                    }
                     _ => (),
                 }
             }
@@ -113,24 +120,30 @@ impl<F> Client<F> where
 
             while !dispatch_queue.is_empty() {
                 if let Some(msg) = dispatch_queue.pop_front() {
-                    match msg.event.as_ref().unwrap().as_str() {
-                        "READY" => {
-                            // this clone is DISGUSTING
-                            let mut ready: Ready = serde_json::from_value(msg.data.clone()).expect("Couldn't parse READY");
-                            
-                            let mut ctx = self.ctx.lock().await;
-                            ctx.user = Some(ready.user);
-                            ctx.resume_info = Some(ResumeInfo {
-                                url: ready.resume_gateway_url,
-                                id: ready.session_id,
-                            });
+                    let event = msg.event.as_ref().unwrap();
 
-                            ctx.cache.guilds.append(&mut ready.cached_guilds);
-                            ctx.cache.users.append(&mut ready.cached_users);
-                        },
-                        _ => (),
+                    if event.as_str() == "RESUMED" {
+                        log::debug!("Resumed");
+                    }
+                    
+                    if event.as_str() == "READY" {
+                        // this clone is DISGUSTING
+                        let mut ready: Ready = serde_json::from_value(msg.data.clone()).expect("Couldn't parse READY");
+
+                        let mut ctx = self.ctx.lock().await;
+                        ctx.user = Some(ready.user);
+                        ctx.resume_info = Some(ResumeInfo {
+                            url: ready.resume_gateway_url,
+                            id: ready.session_id,
+                        });
+
+                        ctx.cache.guilds.append(&mut ready.cached_guilds);
+                        ctx.cache.users.append(&mut ready.cached_users);
+
+                        log::debug!("Context after READY: {ctx:?}");
                     }
 
+                    log::debug!("Running handler on event: {}", event);
                     (self.handler)(self.ctx.clone(), self.ws.clone(), msg).await;
                 }
             }

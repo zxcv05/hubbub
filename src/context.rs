@@ -65,6 +65,8 @@ impl Context {
     }
 
     pub async fn request(&mut self, method: Method, endpoint: &str, body: Option<JSON>) -> Result<Response> {
+        log::debug!("API >> {} {}", method, endpoint);
+
         let builder = self.client.request(method, Url::parse(BASE_URL)?.join(format!("/api/{}", endpoint).as_str())?);
 
         let builder = match &self.auth {
@@ -78,9 +80,15 @@ impl Context {
         };
 
         let res = self.client.execute(builder.build()?).await?;
+
+        let status = res.status();
+        let text = res.text().await?;
+        log::debug!("API << {}", status);
+        log::trace!("{text}");
+
         Ok(Response {
-            status: res.status(),
-            content: serde_json::from_str(res.text().await?.as_str()).unwrap_or(JSON::Null)
+            status,
+            content: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null)
         })
     }
 }

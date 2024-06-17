@@ -1,5 +1,10 @@
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use tokio::sync::MutexGuard;
+use crate::context::{Context, Response};
+use crate::error::Error;
+use crate::types::user::{AvatarDecorationData, User};
 
 use super::{channel::{Channel, welcome_screen::WelcomeScreen}, common::Emoji, role::Role, sticker::Sticker, Snowflake};
 
@@ -131,6 +136,144 @@ pub struct Guild {
     pub presence_count: Option<u64>,
 }
 
+impl Guild {
+    pub fn icon_url(&self) -> Option<String> {
+        self.icon_hash
+            .as_ref()
+            .map(|hash| format!("https://cdn.discordapp.com/icons/{}/{}.png", self.id, hash))
+    }
+
+    pub fn banner_url(&self) -> Option<String> {
+        self.banner
+            .as_ref()
+            .map(|hash| format!("https://cdn.discordapp.com/banners/{}/{}.png", self.id, hash))
+    }
+
+    pub fn splash_url(&self) -> Option<String> {
+        self.splash
+            .as_ref()
+            .map(|hash| format!("https://cdn.discordapp.com/splashes/{}/{}.png", self.id, hash))
+    }
+
+    pub fn discovery_splash_url(&self) -> Option<String> {
+        self.splash_discovery
+            .as_ref()
+            .map(|hash| format!("https://cdn.discordapp.com/splashes/{}/{}.png", self.id, hash))
+    }
+
+    pub async fn fetch_guild(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}", id), None).await
+    }
+
+    // Very rarely likely to work
+    pub async fn delete_guild(self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}", self.id), None).await
+    }
+
+    /**
+     * Channels
+     */
+    
+    pub async fn fetch_channels(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/channels", self.id), None).await
+    }
+
+    pub async fn create_channel(&self, ctx: &mut MutexGuard<'_, Context>, channel: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::POST, &format!("/v9/guilds/{}/channels", self.id), Some(channel)).await
+    }
+
+    /**
+     * Members
+     */
+
+    pub async fn fetch_members(&self, ctx: &mut MutexGuard<'_, Context>, limit: u64) -> anyhow::Result<Response> {
+        if limit == 0 || limit > 1000 {
+            return Err(Error::InvalidApiRequest("limit must be between 1 and 1000".to_string()).into());
+        }
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members?limit={}", self.id, limit), None).await
+    }
+
+    pub async fn fetch_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members/{}", self.id, user_id), None).await
+    }
+
+    pub async fn search_members(&self, ctx: &mut MutexGuard<'_, Context>, query: String, limit: u64) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members/search?query={}&limit={}", self.id, query, limit), None).await
+    }
+
+    pub async fn edit_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake, member: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/members/{}", self.id, user_id), Some(member)).await
+    }
+
+    pub async fn kick_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/members/{}", self.id, user_id), None).await
+    }
+
+    /**
+     * Bans
+     */
+
+    pub async fn ban_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PUT, &format!("/v9/guilds/{}/bans/{}", self.id, user_id), None).await
+    }
+
+    pub async fn unban_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/bans/{}", self.id, user_id), None).await
+    }
+
+    pub async fn get_bans(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/bans", self.id), None).await
+    }
+
+    pub async fn get_ban(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/bans/{}", self.id, user_id), None).await
+    }
+
+    /**
+     * Roles
+     */
+
+    pub async fn fetch_roles(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/roles", self.id), None).await
+    }
+
+    pub async fn create_role(&self, ctx: &mut MutexGuard<'_, Context>, role: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::POST, &format!("/v9/guilds/{}/roles", self.id), Some(role)).await
+    }
+
+    pub async fn edit_role(&self, ctx: &mut MutexGuard<'_, Context>, role_id: Snowflake, role: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/roles/{}", self.id, role_id), Some(role)).await
+    }
+
+    pub async fn delete_role(&self, ctx: &mut MutexGuard<'_, Context>, role_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/roles/{}", self.id, role_id), None).await
+    }
+    
+    pub async fn edit_role_positions(&self, ctx: &mut MutexGuard<'_, Context>, roles: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/roles", self.id), Some(roles)).await
+    }
+
+    /**
+     * Misc.
+     */
+
+    pub async fn fetch_invites(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/invites", self.id), None).await
+    }
+
+    pub async fn fetch_welcome_screen(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/welcome-screen", self.id), None).await
+    }
+
+    pub async fn fetch_onboarding(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/onboarding", self.id), None).await
+    }
+
+    pub async fn fetch_vanity_url(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/vanity-url", self.id), None).await
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CachedGuild {
     pub id: Snowflake,
@@ -164,5 +307,78 @@ pub struct CachedGuild {
     pub guild_scheduled_events: Vec<()>, // TODO
 
     pub version: u64,
+}
+
+impl CachedGuild {
+    pub async fn into_guild(self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Guild> {
+        Ok(serde_json::from_value(Guild::fetch_guild(ctx, self.id).await?.content)?)
+    }
+}
+
+#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[repr(u8)]
+pub enum GuildMemberFlags {
+    DidRejoin               = 1 << 0,
+    CompletedOnboarding     = 1 << 1,
+    BypassesVerification    = 1 << 2,
+    StartedOnboarding       = 1 << 3,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GuildMember {
+    pub user: Option<User>,
+    pub nick: Option<String>,
+    pub avatar: Option<String>,
+    pub roles: Vec<Snowflake>,
+    pub joined_at: String, // ISO8601
+    pub premium_since: Option<String>, // ISO8601
+    pub deaf: bool,
+    pub mute: bool,
+    pub flags: GuildMemberFlags,
+    pub pending: bool,
+    pub permissions: String,
+    pub communication_disabled_until: Option<String>, // ISO8601
+    pub avatar_decoration_data: Option<AvatarDecorationData>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GuildMemberEditBuilder {
+    value: Value,
+}
+
+impl GuildMemberEditBuilder {
+    pub fn new() -> Self {
+        Self {
+            value: json!({})
+        }
+    }
+
+    pub fn set_nick(&mut self, nick: String) {
+        self.value["nick"] = json!(nick);
+    }
+
+    pub fn set_roles(&mut self, roles: Vec<Snowflake>) {
+        self.value["roles"] = json!(roles);
+    }
+
+    pub fn set_deaf(&mut self, deaf: bool) {
+        self.value["deaf"] = json!(deaf);
+    }
+
+    pub fn set_mute(&mut self, mute: bool) {
+        self.value["mute"] = json!(mute);
+    }
+
+    pub fn set_voice_channel(&mut self, channel_id: Snowflake) {
+        self.value["channel_id"] = json!(channel_id);
+    }
+
+    pub fn set_timeout(&mut self, timeout: Option<String>) {
+        self.value["communication_disabled_until"] = json!(timeout);
+    }
+
+    pub fn build(self) -> Value {
+        self.value
+    }
 }
 

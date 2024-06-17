@@ -49,6 +49,8 @@ impl StreamCtrl {
 
         let rxq = _rxq.clone();
         tokio::task::spawn(async move {
+            log::debug!("Starting websocket read loop");
+
             loop {
                 let resp = match rx.try_next().await {
                     Ok(v) => v,
@@ -60,26 +62,33 @@ impl StreamCtrl {
                 };
 
                 if let Some(msg) = resp {
+                    log::debug!("<<");
+                    log::trace!("{msg:?}");
+
                     let mut rxq = rxq.lock().await;
                     rxq.push_back(msg);
                 }
 
-                std::thread::sleep(Duration::from_millis(5));
+                sleep(Duration::from_millis(5));
             }
         });
 
         let txq = _txq.clone();
         tokio::task::spawn(async move {
+            log::debug!("Starting websocket write loop");
+
             loop {
                 let mut txq = match txq.try_lock() {
                     Ok(v) => v,
                     Err(_) => {
-                        std::thread::sleep(Duration::from_millis(5));
+                        sleep(Duration::from_millis(5));
                         continue;
                     },
                 };
     
                 while let Some(msg) = txq.pop_front() {
+                    log::debug!(">>");
+                    log::trace!("{msg:?}");
                     tx.feed(msg).await.expect("Couldn't feed tx");
                 }
                 
@@ -90,7 +99,7 @@ impl StreamCtrl {
 
                 drop(txq);
 
-                std::thread::sleep(Duration::from_millis(5));
+                sleep(Duration::from_millis(5));
             }
         });
 
@@ -185,7 +194,6 @@ impl Websocket {
         Ok(Message::Text(serde_json::to_string(&msg)?))
     }
 
-
     pub fn resume_packet(&self, info: &ResumeInfo) -> DiscordMessage {
         DiscordMessage {
             op: 6,
@@ -246,6 +254,8 @@ impl Websocket {
             return Err(Error::NoTokenGiven.into());
         }
     
+        log::debug!("Initating connection");
+        
         let hello = self.read().await?;
         self.heartbeat = hello.data["heartbeat_interval"].as_u64().expect("Invalid heartbeat interval");
     
@@ -257,6 +267,8 @@ impl Websocket {
 
     pub async fn login(&mut self) -> Result<()> {
         self.initiate().await?;
+        
+        log::debug!("Sending identify packet");
         self.send(self.identify_packet()).await?;
         
         Ok(())
@@ -264,12 +276,15 @@ impl Websocket {
 
     pub async fn resume(&mut self, info: &ResumeInfo) -> Result<()> {
         self.initiate().await?;
+        
+        log::debug!("Sending resume packet");
         self.send(self.resume_packet(info)).await?;
 
         Ok(())
     }
 
     pub async fn heartbeat(&mut self) -> Result<()> {
+        log::debug!("Sending heartbeat");
         self.send(DiscordMessage {
             op: 1,
             data: match self.sequence {

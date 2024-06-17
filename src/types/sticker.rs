@@ -21,6 +21,13 @@ pub enum StickerFormat {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct StickerItem {
+    pub id: Snowflake,
+    pub name: String,
+    pub format_type: StickerFormat,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Sticker {
     pub id: Snowflake,
     pub pack_id: Option<Snowflake>,
