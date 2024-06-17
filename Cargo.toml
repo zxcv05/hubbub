@@ -5,6 +5,8 @@ edition = "2021"
 license = "GPL-3.0-or-later"
 description = "Discord self-bot library for rust"
 keywords = [ "discord", "self", "bot" ]
+authors = [ "github:zxcv05" ]
+repository = "https://github.com/zxcv05/hubbub"
 
 [dependencies]
 anyhow = "1.0.86"
