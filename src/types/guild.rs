@@ -173,104 +173,170 @@ impl Guild {
     /**
      * Channels
      */
-    
+
+    pub async fn fetch_channels_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/channels", id), None).await
+    }
     pub async fn fetch_channels(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/channels", self.id), None).await
+        Self::fetch_channels_static(ctx, self.id).await
     }
 
+    pub async fn create_channel_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, channel: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::POST, &format!("/v9/guilds/{}/channels", id), Some(channel)).await
+    }
     pub async fn create_channel(&self, ctx: &mut MutexGuard<'_, Context>, channel: Value) -> anyhow::Result<Response> {
-        ctx.request(http::Method::POST, &format!("/v9/guilds/{}/channels", self.id), Some(channel)).await
+        Self::create_channel_static(ctx, self.id, channel).await
     }
 
     /**
      * Members
      */
 
-    pub async fn fetch_members(&self, ctx: &mut MutexGuard<'_, Context>, limit: u64) -> anyhow::Result<Response> {
+    pub async fn fetch_members_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, limit: u64) -> anyhow::Result<Response> {
         if limit == 0 || limit > 1000 {
             return Err(Error::InvalidApiRequest("limit must be between 1 and 1000".to_string()).into());
         }
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members?limit={}", self.id, limit), None).await
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members?limit={}", id, limit), None).await
+    }
+    pub async fn fetch_members(&self, ctx: &mut MutexGuard<'_, Context>, limit: u64) -> anyhow::Result<Response> {
+        Self::fetch_members_static(ctx, self.id, limit).await
     }
 
+    pub async fn fetch_member_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members/{}", id, user_id), None).await
+    }
     pub async fn fetch_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members/{}", self.id, user_id), None).await
+        Self::fetch_member_static(ctx, self.id, user_id).await
     }
 
+    pub async fn search_members_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, query: String, limit: u64) -> anyhow::Result<Response> {
+        if limit == 0 || limit > 1000 {
+            return Err(Error::InvalidApiRequest("limit must be between 1 and 1000".to_string()).into());
+        }
+        ctx.request(
+            http::Method::GET,
+            &format!("/v9/guilds/{}/members/search?query={}&limit={}", id, query, limit),
+            None).await
+    }
     pub async fn search_members(&self, ctx: &mut MutexGuard<'_, Context>, query: String, limit: u64) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/members/search?query={}&limit={}", self.id, query, limit), None).await
+        Self::search_members_static(ctx, self.id, query, limit).await
     }
 
+    pub async fn edit_member_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, user_id: Snowflake, member: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/members/{}", id, user_id), Some(member)).await
+    }
     pub async fn edit_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake, member: Value) -> anyhow::Result<Response> {
-        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/members/{}", self.id, user_id), Some(member)).await
+        Self::edit_member_static(ctx, self.id, user_id, member).await
     }
 
-    pub async fn kick_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
+    pub async fn kick_member_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, user_id: Snowflake) -> anyhow::Result<Response> {
         ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/members/{}", self.id, user_id), None).await
+    }
+    pub async fn kick_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
+        Self::kick_member_static(ctx, self.id, user_id).await
     }
 
     /**
      * Bans
      */
 
+    pub async fn ban_member_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PUT, &format!("/v9/guilds/{}/bans/{}", id, user_id), None).await
+    }
     pub async fn ban_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::PUT, &format!("/v9/guilds/{}/bans/{}", self.id, user_id), None).await
+        Self::ban_member_static(ctx, self.id, user_id).await
     }
 
+    pub async fn unban_member_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/bans/{}", id, user_id), None).await
+    }
     pub async fn unban_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/bans/{}", self.id, user_id), None).await
+        Self::unban_member_static(ctx, self.id, user_id).await
     }
 
+    pub async fn get_bans_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/bans", id), None).await
+    }
     pub async fn get_bans(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/bans", self.id), None).await
+        Self::get_bans_static(ctx, self.id).await
     }
 
+    pub async fn get_ban_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, user_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/bans/{}", id, user_id), None).await
+    }
     pub async fn get_ban(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/bans/{}", self.id, user_id), None).await
+        Self::get_ban_static(ctx, self.id, user_id).await
     }
 
     /**
      * Roles
      */
 
+    pub async fn fetch_roles_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/roles", id), None).await
+    }
     pub async fn fetch_roles(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/roles", self.id), None).await
+        Self::fetch_roles_static(ctx, self.id).await
     }
 
+    pub async fn create_role_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, role: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::POST, &format!("/v9/guilds/{}/roles", id), Some(role)).await
+    }
     pub async fn create_role(&self, ctx: &mut MutexGuard<'_, Context>, role: Value) -> anyhow::Result<Response> {
-        ctx.request(http::Method::POST, &format!("/v9/guilds/{}/roles", self.id), Some(role)).await
+        Self::create_role_static(ctx, self.id, role).await
     }
 
+    pub async fn edit_role_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, role_id: Snowflake, role: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/roles/{}", id, role_id), Some(role)).await
+    }
     pub async fn edit_role(&self, ctx: &mut MutexGuard<'_, Context>, role_id: Snowflake, role: Value) -> anyhow::Result<Response> {
-        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/roles/{}", self.id, role_id), Some(role)).await
+        Self::edit_role_static(ctx, self.id, role_id, role).await
     }
 
-    pub async fn delete_role(&self, ctx: &mut MutexGuard<'_, Context>, role_id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/roles/{}", self.id, role_id), None).await
+    pub async fn delete_role_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, role_id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/roles/{}", id, role_id), None).await
     }
-    
+    pub async fn delete_role(&self, ctx: &mut MutexGuard<'_, Context>, role_id: Snowflake) -> anyhow::Result<Response> {
+        Self::delete_role_static(ctx, self.id, role_id).await
+    }
+
+    pub async fn edit_role_positions_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, roles: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/roles", id), Some(roles)).await
+    }
     pub async fn edit_role_positions(&self, ctx: &mut MutexGuard<'_, Context>, roles: Value) -> anyhow::Result<Response> {
-        ctx.request(http::Method::PATCH, &format!("/v9/guilds/{}/roles", self.id), Some(roles)).await
+        Self::edit_role_positions_static(ctx, self.id, roles).await
     }
 
     /**
      * Misc.
      */
 
+    pub async fn fetch_invites_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/invites", id), None).await
+    }
     pub async fn fetch_invites(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/invites", self.id), None).await
+        Self::fetch_invites_static(ctx, self.id).await
     }
 
+    pub async fn fetch_welcome_screen_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/welcome-screen", id), None).await
+    }
     pub async fn fetch_welcome_screen(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/welcome-screen", self.id), None).await
+        Self::fetch_welcome_screen_static(ctx, self.id).await
     }
 
+    pub async fn fetch_onboarding_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/onboarding", id), None).await
+    }
     pub async fn fetch_onboarding(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/onboarding", self.id), None).await
+        Self::fetch_onboarding_static(ctx, self.id).await
     }
 
+    pub async fn fetch_vanity_url_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/vanity-url", id), None).await
+    }
     pub async fn fetch_vanity_url(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/vanity-url", self.id), None).await
+        Self::fetch_vanity_url_static(ctx, self.id).await
     }
 }
 

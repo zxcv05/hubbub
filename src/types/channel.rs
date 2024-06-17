@@ -177,23 +177,35 @@ impl Channel {
     }
 
     pub async fn delete_channel(self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
-        ctx.request(http::Method::DELETE, &format!("/v9/channels/{}", self.id), None).await
+        Self::delete_channel_static(ctx, self.id).await
+    }
+    pub async fn delete_channel_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/channels/{}", id), None).await
     }
 
     pub async fn send_message(&self, ctx: &mut MutexGuard<'_, Context>, msg: Value) -> anyhow::Result<Response> {
-        ctx.request(http::Method::POST, &format!("/v9/channels/{}/messages", self.id), Some(msg)).await
+        Self::send_message_static(ctx, self.id, msg).await
+    }
+    pub async fn send_message_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, msg: Value) -> anyhow::Result<Response> {
+        ctx.request(http::Method::POST, &format!("/v9/channels/{}/messages", channel_id), Some(msg)).await
     }
 
     pub async fn fetch_messages(&self, ctx: &mut MutexGuard<'_, Context>, limit: u64) -> anyhow::Result<Response> {
+        Self::fetch_messages_static(ctx, self.id, limit).await
+    }
+    pub async fn fetch_messages_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, limit: u64) -> anyhow::Result<Response> {
         if limit > 100 {
             return Err(Error::InvalidApiRequest("limit must be less than 100".to_string()).into());
         }
 
-        ctx.request(http::Method::GET, &format!("/v9/channels/{}/messages?limit={}", self.id, limit), None).await
+        ctx.request(http::Method::GET, &format!("/v9/channels/{}/messages?limit={}", channel_id, limit), None).await
     }
 
     pub async fn fetch_message(&self, ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/channels/{}/messages/{}", self.id, id), None).await
+        Self::fetch_message_static(ctx, self.id, id).await
+    }
+    pub async fn fetch_message_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/channels/{}/messages/{}", channel_id, id), None).await
     }
 }
 
