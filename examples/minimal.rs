@@ -9,7 +9,7 @@ struct App {}
 #[tokio::main]
 async fn main() -> Result<()> {
     let mut client = Client::new(App {}, Box::from(
-        |ctx: Ctx, _ws: Ws, model: Model<App>, msg: DiscordMessage| async move {
+        |ctx: Ctx, _ws: Ws, _model: Model<App>, msg: DiscordMessage| async move {
             if msg.event.as_ref().unwrap().as_str() == "READY" {
                 println!("Bot ready!");
                 
