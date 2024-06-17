@@ -10,7 +10,7 @@ use std::{collections::VecDeque, sync::Arc, thread::sleep, time::Duration};
 use reqwest_websocket::{websocket, Message, WebSocket as WS};
 
 
-static DISCORD_WS_URI: &'static str = "wss://gateway.discord.gg/?encoding=json&v=9";
+static DISCORD_WS_URI: &str = "wss://gateway.discord.gg/?encoding=json&v=9";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessage {
@@ -69,7 +69,7 @@ impl StreamCtrl {
                     rxq.push_back(msg);
                 }
 
-                sleep(Duration::from_millis(5));
+                tokio::time::sleep(Duration::from_millis(5)).await;
             }
         });
 
@@ -81,7 +81,7 @@ impl StreamCtrl {
                 let mut txq = match txq.try_lock() {
                     Ok(v) => v,
                     Err(_) => {
-                        sleep(Duration::from_millis(5));
+                        tokio::time::sleep(Duration::from_millis(5)).await;
                         continue;
                     },
                 };
@@ -99,7 +99,7 @@ impl StreamCtrl {
 
                 drop(txq);
 
-                sleep(Duration::from_millis(5));
+                tokio::time::sleep(Duration::from_millis(5)).await;
             }
         });
 
@@ -107,10 +107,11 @@ impl StreamCtrl {
     }
 }
 
+type Queue = Arc<Mutex<VecDeque<Message>>>;
 
 pub struct Websocket {
     // tx, rx
-    pub q: (Arc<Mutex<VecDeque<Message>>>, Arc<Mutex<VecDeque<Message>>>),
+    pub q: (Queue, Queue),
     
     pub ready: bool,
     
@@ -165,7 +166,7 @@ impl Websocket {
 
             if lock.is_empty() {
                 drop(lock);
-                sleep(Duration::from_millis(5));
+                tokio::time::sleep(Duration::from_millis(5)).await;
                 continue;
             }
 
@@ -250,12 +251,12 @@ impl Websocket {
 
 
     pub async fn initiate(&mut self) -> Result<()> {
-        if let None = self.token {
+        if self.token.is_none() {
             return Err(Error::NoTokenGiven.into());
         }
-    
-        log::debug!("Initating connection");
-        
+
+        log::debug!("Initiating connection");
+
         let hello = self.read().await?;
         self.heartbeat = hello.data["heartbeat_interval"].as_u64().expect("Invalid heartbeat interval");
     
@@ -267,7 +268,7 @@ impl Websocket {
 
     pub async fn login(&mut self) -> Result<()> {
         self.initiate().await?;
-        
+
         log::debug!("Sending identify packet");
         self.send(self.identify_packet()).await?;
         
@@ -276,7 +277,7 @@ impl Websocket {
 
     pub async fn resume(&mut self, info: &ResumeInfo) -> Result<()> {
         self.initiate().await?;
-        
+
         log::debug!("Sending resume packet");
         self.send(self.resume_packet(info)).await?;
 

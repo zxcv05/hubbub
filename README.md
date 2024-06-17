@@ -24,11 +24,11 @@ async fn main() -> anyhow::Result<()> {
 ```
 4. Create the event handler
 ```rust
-Box::from(
-    |ctx: Arc<Mutex<Context>>, ws: Arc<Mutex<Websocket>>, msg: DiscordMessage| async move {
-        /* do work here */
-    }
-)
+    Client::new(Box::from(
+        |ctx: Ctx, ws: Ws, msg: DiscordMessage| async move {
+            /* do work here */
+        }
+    )).await?;
 ```
 5. Success, hopefully!
 

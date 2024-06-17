@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
-use serde_json::Map;
 use crate::types::channel::Channel;
 use crate::types::message::{Attachment, Message};
 use crate::types::role::Role;

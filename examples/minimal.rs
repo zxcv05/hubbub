@@ -1,21 +1,20 @@
 extern crate hubbub;
 
 use hubbub::prelude::*;
-use tokio::sync::Mutex;
-use std::{process::exit, sync::Arc};
+use std::{process::exit};
 
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     let mut client = Client::new(Box::from(
-        |ctx: Arc<Mutex<Context>>, _ws: Arc<Mutex<Websocket>>, msg: DiscordMessage| async move {
+        |ctx: Ctx, _ws: Ws, msg: DiscordMessage| async move {
             if msg.event.as_ref().unwrap().as_str() == "READY" {
                 println!("Bot ready!");
                 
                 let mut ctx = ctx.lock().await;
                 println!("Logged in as {}", ctx.user.as_ref().unwrap().username);
 
-                let resp = ctx.request(http::Method::GET, "/v9/users/@me", None).await.expect("Couldn't send API request");
+                let resp = ctx.request(Method::GET, "/v9/users/@me", None).await.expect("Couldn't send API request");
                 println!("{resp:#?}");
                 
                 exit(0);

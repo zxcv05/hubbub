@@ -11,3 +11,6 @@ pub use http::Method;
 pub use serde_json::{json, Value};
 pub use std::sync::Arc;
 pub use tokio::sync::Mutex;
+
+pub type Ctx = Arc<Mutex<Context>>;
+pub type Ws = Arc<Mutex<Websocket>>;
