@@ -14,3 +14,4 @@ pub use tokio::sync::{Mutex, MutexGuard};
 
 pub type Ctx = Arc<Mutex<Context>>;
 pub type Ws = Arc<Mutex<Websocket>>;
+pub type Model<M> = Arc<Mutex<M>>;

@@ -13,25 +13,28 @@ use tokio::sync::Mutex;
 use types::gateway::Ready;
 use websocket::{DiscordMessage, Websocket};
 use std::{cmp::max, collections::VecDeque, sync::Arc, time::Duration};
+use crate::prelude::{Ctx, Model, Ws};
 
 
-pub type Handler<F> = dyn Fn(Arc<Mutex<Context>>, Arc<Mutex<Websocket>>, DiscordMessage) -> F;
+pub type Handler<F,M> = dyn Fn(Ctx, Ws, Model<M>, DiscordMessage) -> F;
 
-pub struct Client<F> where
+pub struct Client<F, Model> where
     F: Future + Send + 'static,
     F::Output: Send + 'static {
     ws: Arc<Mutex<Websocket>>,
     ctx: Arc<Mutex<Context>>,
-    handler: Box<Handler<F>>,
+    handler: Box<Handler<F, Model>>,
+    model: Arc<Mutex<Model>>
 }
 
-impl<F> Client<F> where
+impl<F, Model> Client<F, Model> where
     F: Future + Send + 'static,
     F::Output: Send + 'static {
-    pub async fn new(handler: Box<Handler<F>>) -> Result<Self> {
+    pub async fn new(model: Model, handler: Box<Handler<F, Model>>) -> Result<Self> {
         Ok(Self {
             ws: Arc::new(Mutex::from(Websocket::new().await?)),
             ctx: Arc::new(Mutex::from(Context::default())),
+            model: Arc::new(Mutex::from(model)),
             handler,
         })
     }
@@ -141,7 +144,7 @@ impl<F> Client<F> where
                         log::trace!("Context after READY: {ctx:?}");
                     }
 
-                    (self.handler)(self.ctx.clone(), self.ws.clone(), msg).await;
+                    (self.handler)(self.ctx.clone(), self.ws.clone(), self.model.clone(), msg).await;
                 }
             }
 

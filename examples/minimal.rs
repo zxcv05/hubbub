@@ -4,10 +4,12 @@ use hubbub::prelude::*;
 use std::{process::exit};
 
 
+struct App {}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut client = Client::new(Box::from(
-        |ctx: Ctx, _ws: Ws, msg: DiscordMessage| async move {
+    let mut client = Client::new(App {}, Box::from(
+        |ctx: Ctx, _ws: Ws, model: Model<App>, msg: DiscordMessage| async move {
             if msg.event.as_ref().unwrap().as_str() == "READY" {
                 println!("Bot ready!");
                 
