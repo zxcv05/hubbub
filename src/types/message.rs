@@ -186,6 +186,7 @@ pub struct Call {
 pub struct Message {
     pub id: Snowflake,
     pub channel_id: Snowflake,
+    pub guild_id: Option<Snowflake>,
 
     pub content: String,
 
@@ -462,67 +463,78 @@ impl EmbedBuilder {
         }
     }
 
-    pub fn set_author(&mut self, author: embed::Author) {
+    pub fn author(mut self, author: embed::Author) -> Self {
         if author.name.len() > 256 {
             panic!("Author name must be less than 256 characters");
         }
 
         self.value["author"] = json!(author);
+        self
     }
 
-    pub fn set_title(&mut self, title: String) {
+    pub fn title(mut self, title: String) -> Self {
         if title.len() > 256 {
             panic!("Title must be less than 256 characters");
         }
 
         self.value["title"] = json!(title);
+        self
     }
 
-    pub fn set_description(&mut self, description: String) {
+    pub fn description(mut self, description: String) -> Self {
         if description.len() > 4096 {
             panic!("Description must be less than 4096 characters");
         }
 
         self.value["description"] = json!(description);
+        self
     }
 
-    pub fn set_url(&mut self, url: String) {
+    pub fn url(mut self, url: String) -> Self {
         self.value["url"] = json!(url);
+        self
     }
 
-    pub fn set_color(&mut self, color: u32) {
+    pub fn color(mut self, color: u32) -> Self {
         self.value["color"] = json!(color);
+        self
     }
 
-    pub fn set_timestamp(&mut self, timestamp: String) {
+    pub fn timestamp(mut self, timestamp: String) -> Self {
         self.value["timestamp"] = json!(timestamp);
+        self
     }
 
-    pub fn set_footer(&mut self, footer: embed::Footer) {
+    pub fn footer(mut self, footer: embed::Footer) -> Self {
         if footer.text.len() > 2048 {
             panic!("Footer text must be less than 2048 characters");
         }
 
         self.value["footer"] = json!(footer);
+        self
     }
 
-    pub fn set_image(&mut self, image: embed::Image) {
+    pub fn image(mut self, image: embed::Image) -> Self {
         self.value["image"] = json!(image);
+        self
     }
 
-    pub fn set_thumbnail(&mut self, thumbnail: embed::Thumbnail) {
+    pub fn thumbnail(mut self, thumbnail: embed::Thumbnail) -> Self {
         self.value["thumbnail"] = json!(thumbnail);
+        self
     }
 
-    pub fn set_video(&mut self, video: embed::Video) {
+    pub fn video(mut self, video: embed::Video) -> Self {
         self.value["video"] = json!(video);
+        self
     }
 
-    pub fn set_provider(&mut self, provider: embed::Provider) {
+    pub fn provider(mut self, provider: embed::Provider) -> Self {
         self.value["provider"] = json!(provider);
+        self
     }
 
-    pub fn add_field(&mut self, field: embed::Field) {
+    pub fn add_field(mut self, field: embed::Field) -> Self {
         if field.name.len() > 256 {
             panic!("Field name must be less than 256 characters");
         }
@@ -542,6 +554,7 @@ impl EmbedBuilder {
 
         fields.push(json!(field));
         self.value["fields"] = json!(fields);
+        self
     }
 }
 
@@ -560,7 +573,7 @@ impl MessageBuilder {
         }
     }
 
-    pub fn add_component(&mut self, component: component::Component) {
+    pub fn add_component(mut self, component: component::Component) -> Self {
         let components = match self.value["components"].as_array_mut() {
             None => &mut Vec::new(),
             Some(v) => v,
@@ -568,9 +581,10 @@ impl MessageBuilder {
 
         components.push(json!(component));
         self.value["components"] = json!(components);
+        self
     }
 
-    pub fn add_embed(&mut self, embed: embed::Embed) {
+    pub fn add_embed(mut self, embed: embed::Embed) -> Self {
         let embeds = match self.value["embeds"].as_array_mut() {
             None => &mut Vec::new(),
             Some(v) => v,
@@ -582,9 +596,10 @@ impl MessageBuilder {
 
         embeds.push(json!(embed));
         self.value["embeds"] = json!(embeds);
+        self
     }
 
-    pub fn add_attachment(&mut self, attachment: Attachment) {
+    pub fn add_attachment(mut self, attachment: Attachment) -> Self {
         let attachments = match self.value["attachments"].as_array_mut() {
             None => &mut Vec::new(),
             Some(v) => v,
@@ -592,14 +607,17 @@ impl MessageBuilder {
 
         attachments.push(json!(attachment));
         self.value["attachments"] = json!(attachments);
+        self
     }
 
-    pub fn set_reference(&mut self, message_reference: Reference) {
+    pub fn reference(mut self, message_reference: Reference) -> Self {
         self.value["message_reference"] = json!(message_reference);
+        self
     }
 
-    pub fn set_poll(&mut self, poll: Poll) {
+    pub fn poll(mut self, poll: Poll) -> Self {
         self.value["poll"] = json!(poll);
+        self
     }
 
     pub fn build(self) -> Value {

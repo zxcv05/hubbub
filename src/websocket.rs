@@ -6,7 +6,7 @@ use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value as JSON};
 use tokio::sync::Mutex;
-use std::{collections::VecDeque, sync::Arc, thread::sleep, time::Duration};
+use std::{collections::VecDeque, sync::Arc, time::Duration};
 use reqwest_websocket::{websocket, Message, WebSocket as WS};
 
 

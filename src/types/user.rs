@@ -100,7 +100,7 @@ pub struct User {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct BotUser {
-    pub id: String,
+    pub id: Snowflake,
     pub username: String,
     pub global_name: Option<String>,
     pub pronouns: String,
