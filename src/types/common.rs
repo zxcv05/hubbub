@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use crate::types::channel::Channel;
+use crate::types::guild::GuildMember;
 use crate::types::message::{Attachment, Message};
 use crate::types::role::Role;
 
@@ -25,7 +26,7 @@ pub struct Emoji {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Resolved {
     pub users: Option<HashMap<Snowflake, User>>,
-    pub members: Option<HashMap<Snowflake, User>>, // TODO guild member
+    pub members: Option<HashMap<Snowflake, GuildMember>>,
     pub roles: Option<HashMap<Snowflake, Role>>,
     pub channels: Option<HashMap<Snowflake, Channel>>,
     pub messages: Option<HashMap<Snowflake, Message>>,
