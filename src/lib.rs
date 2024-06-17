@@ -42,7 +42,7 @@ impl<F> Client<F> where
         let mut ctx = self.ctx.lock().await;
         ctx.set_auth(token);
 
-        match ctx.request(http::Method::GET, "users/@me", None).await {
+        match ctx.request(http::Method::GET, "/v9/users/@me", None).await {
             Ok(r) => {
                 // If return value was an error
                 if r.content.get("code").is_some() && r.content.get("message").is_some() {
@@ -90,27 +90,25 @@ impl<F> Client<F> where
 
             let mut seq = ws.sequence;
             while let Some(msg) = ws.try_read().await? {
-                log::trace!("Received message: {msg:?}");
-
                 match msg.op {
                     0 => {
-                        log::debug!("Got dispatch event #{}: {}", msg.seq.as_ref().unwrap(), msg.event.as_ref().unwrap());
+                        log::trace!("Got dispatch event #{}: {}", msg.seq.as_ref().unwrap(), msg.event.as_ref().unwrap());
                         seq = max(seq, msg.seq);
                         dispatch_queue.push_back(msg)
                     },
                     1 => {
-                        log::debug!("Gateway asked for heartbeat");
+                        log::trace!("Gateway asked for heartbeat");
                         ws.heartbeat().await?;
                     }
                     7 => {
-                        log::debug!("Gateway asked for reconnect");
+                        log::trace!("Gateway asked for reconnect");
                         let ctx = self.ctx.lock().await;
                         let seq = ws.sequence;
                         *ws = Websocket::new_with(&(ctx.resume_info.as_ref().unwrap().url), seq.unwrap()).await?;
                         ws.resume(ctx.resume_info.as_ref().unwrap()).await?;
                     }
                     11 => {
-                        log::debug!("Gateway acknowledged heartbeat");
+                        log::trace!("Gateway acknowledged heartbeat");
                     }
                     _ => (),
                 }
@@ -125,7 +123,7 @@ impl<F> Client<F> where
                     if event.as_str() == "RESUMED" {
                         log::debug!("Resumed");
                     }
-                    
+
                     if event.as_str() == "READY" {
                         // this clone is DISGUSTING
                         let mut ready: Ready = serde_json::from_value(msg.data.clone()).expect("Couldn't parse READY");
@@ -140,10 +138,9 @@ impl<F> Client<F> where
                         ctx.cache.guilds.append(&mut ready.cached_guilds);
                         ctx.cache.users.append(&mut ready.cached_users);
 
-                        log::debug!("Context after READY: {ctx:?}");
+                        log::trace!("Context after READY: {ctx:?}");
                     }
 
-                    log::debug!("Running handler on event: {}", event);
                     (self.handler)(self.ctx.clone(), self.ws.clone(), msg).await;
                 }
             }

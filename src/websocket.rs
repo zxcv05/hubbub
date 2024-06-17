@@ -49,7 +49,7 @@ impl StreamCtrl {
 
         let rxq = _rxq.clone();
         tokio::task::spawn(async move {
-            log::debug!("Starting websocket read loop");
+            log::trace!("Starting websocket read loop");
 
             loop {
                 let resp = match rx.try_next().await {
@@ -62,8 +62,7 @@ impl StreamCtrl {
                 };
 
                 if let Some(msg) = resp {
-                    log::debug!("<<");
-                    log::trace!("{msg:?}");
+                    log::trace!("<<\n{msg:?}");
 
                     let mut rxq = rxq.lock().await;
                     rxq.push_back(msg);
@@ -75,7 +74,7 @@ impl StreamCtrl {
 
         let txq = _txq.clone();
         tokio::task::spawn(async move {
-            log::debug!("Starting websocket write loop");
+            log::trace!("Starting websocket write loop");
 
             loop {
                 let mut txq = match txq.try_lock() {
@@ -87,8 +86,7 @@ impl StreamCtrl {
                 };
     
                 while let Some(msg) = txq.pop_front() {
-                    log::debug!(">>");
-                    log::trace!("{msg:?}");
+                    log::trace!(">>\n{msg:?}");
                     tx.feed(msg).await.expect("Couldn't feed tx");
                 }
                 

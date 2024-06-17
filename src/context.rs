@@ -65,7 +65,7 @@ impl Context {
     }
 
     pub async fn request(&mut self, method: Method, endpoint: &str, body: Option<JSON>) -> Result<Response> {
-        log::debug!("API >> {} {}", method, endpoint);
+        log::debug!(">> {} {}", method, endpoint);
 
         let builder = self.client.request(method, Url::parse(BASE_URL)?.join(format!("/api/{}", endpoint).as_str())?);
 
@@ -83,7 +83,7 @@ impl Context {
 
         let status = res.status();
         let text = res.text().await?;
-        log::debug!("API << {}", status);
+        log::debug!("<< {}", status);
         log::trace!("{text}");
 
         Ok(Response {
