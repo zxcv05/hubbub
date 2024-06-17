@@ -5,7 +5,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use super::common::Emoji;
 
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum ActivityType {
     Game = 0, // Playing {name}

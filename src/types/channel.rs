@@ -7,7 +7,7 @@ use crate::error::Error;
 
 use super::{user::User, Snowflake};
 
-#[derive(Deserialize_repr, Serialize_repr, Debug, PartialEq, Eq)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum ChannelType {
     Text = 0,
@@ -34,7 +34,7 @@ pub enum ChannelFlag {
     HideDownloadOptions = 1 << 15
 }
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum VideoQualityMode {
     Auto = 1, // "Not present"
@@ -66,7 +66,7 @@ pub struct ThreadMember {
 }
 
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum OverwriteType {
     Role = 0,
@@ -239,7 +239,7 @@ pub mod stage_instance {
 
     use crate::types::Snowflake;
 
-    #[derive(Deserialize_repr, Serialize_repr, Debug)]
+    #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
     #[repr(u8)]
     pub enum PrivacyLevel {
         Public = 1,

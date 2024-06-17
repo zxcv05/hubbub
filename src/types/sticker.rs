@@ -4,14 +4,14 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use super::{user::User, Snowflake};
 
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum StickerType {
     Standard = 1, // "Official" sticker
     Guild = 2,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum StickerFormat {
     PNG = 1,

@@ -12,7 +12,7 @@ use crate::types::{
     user::User
 };
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum AttachmentFlags {
     IsRemix = 1 << 2,
@@ -60,7 +60,7 @@ pub struct Reaction {
     pub burst_colors: Vec<u32>,
 }
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u64)]
 pub enum MessageType {
     Default = 0,
@@ -115,7 +115,7 @@ pub enum MessageType {
     GuildIncidentReportFalseAlarm = 39,
 }
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum ActivityType {
     Join = 1,
@@ -154,7 +154,7 @@ pub enum MessageFlag {
     IsVoiceMessage = 1 << 13,
 }
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum InteractionType {
     Ping = 1,
@@ -334,7 +334,7 @@ pub mod component {
     use crate::types::channel::ChannelType;
     use crate::types::common::Emoji;
 
-    #[derive(Deserialize_repr, Serialize_repr, Debug)]
+    #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
     #[repr(u8)]
     pub enum ComponentType {
         ActionRow = 1,
@@ -354,7 +354,7 @@ pub mod component {
         pub components: Option<Vec<Value>>,
     }
 
-    #[derive(Deserialize_repr, Serialize_repr, Debug)]
+    #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
     #[repr(u8)]
     pub enum ButtonStyle {
         Primary = 1,
@@ -414,7 +414,7 @@ pub mod component {
         pub disabled: Option<bool>,
     }
 
-    #[derive(Deserialize_repr, Serialize_repr, Debug)]
+    #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
     #[repr(u8)]
     pub enum TextInputStyle {
         Short = 1,

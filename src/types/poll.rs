@@ -21,7 +21,7 @@ pub struct AnswerCount {
     pub me_voted: bool,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum LayoutType {
     Default = 1

@@ -19,7 +19,7 @@ pub struct UserClan {
 }
 
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum RelationshipType {
     User = 1,
@@ -36,7 +36,7 @@ pub struct Relationship {
 }
 
 
-#[derive(Deserialize_repr, Serialize_repr, Debug)]
+#[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum PremiumType {
     None = 0,

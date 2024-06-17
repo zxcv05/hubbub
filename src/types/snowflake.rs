@@ -9,7 +9,7 @@ use crate::prelude::Error;
 pub static DISCORD_EPOCH: u128 = 1420070400000;
 
 
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Clone, Hash)]
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Clone, Copy, Hash)]
 pub struct Snowflake(u64);
 
 impl Display for Snowflake {

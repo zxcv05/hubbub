@@ -9,14 +9,14 @@ use crate::types::user::{AvatarDecorationData, User};
 use super::{channel::{Channel, welcome_screen::WelcomeScreen}, common::Emoji, role::Role, sticker::Sticker, Snowflake};
 
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum MFALevel {
     None = 0, // dont
     Elevated = 1, // need 2FA for moderation
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum NSFWLevel {
     Default = 0,
@@ -25,7 +25,7 @@ pub enum NSFWLevel {
     AgeRestricted = 3,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum VerificationLevel {
     None = 0,     // unrestricted
@@ -35,14 +35,14 @@ pub enum VerificationLevel {
     VeryHigh = 4, // verified phone #
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum MessageNotificationLevel {
     AllMessages = 0,
     OnlyMentions = 1,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug)]
+#[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum ExplicitContentFilterLevel {
     Disabled = 0, // no members get scanned

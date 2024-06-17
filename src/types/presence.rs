@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::activity::Activity;
 
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Eq, PartialEq, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum StatusType {
     Online,
