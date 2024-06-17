@@ -230,7 +230,7 @@ impl Guild {
     }
 
     pub async fn kick_member_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake, user_id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/members/{}", self.id, user_id), None).await
+        ctx.request(http::Method::DELETE, &format!("/v9/guilds/{}/members/{}", id, user_id), None).await
     }
     pub async fn kick_member(&self, ctx: &mut MutexGuard<'_, Context>, user_id: Snowflake) -> anyhow::Result<Response> {
         Self::kick_member_static(ctx, self.id, user_id).await
