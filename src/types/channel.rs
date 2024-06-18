@@ -191,17 +191,23 @@ impl Channel {
         ctx.request(http::Method::POST, &format!("/v9/channels/{}/messages", channel_id), Some(msg)).await
     }
 
-    pub async fn fetch_messages(&self, ctx: &mut MutexGuard<'_, Context>, limit: u64) -> anyhow::Result<Response> {
-        Self::fetch_messages_static(ctx, self.id, limit).await
+    pub async fn fetch_messages(&self, ctx: &mut MutexGuard<'_, Context>, limit: u64, after: Option<Snowflake>) -> anyhow::Result<Response> {
+        Self::fetch_messages_static(ctx, self.id, limit, after).await
     }
-    pub async fn fetch_messages_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, limit: u64) -> anyhow::Result<Response> {
+    pub async fn fetch_messages_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, limit: u64, after: Option<Snowflake>) -> anyhow::Result<Response> {
         if limit > 100 {
             return Err(Error::InvalidApiRequest("limit must be less than 100".to_string()).into());
         }
-
-        ctx.request(http::Method::GET, &format!("/v9/channels/{}/messages?limit={}", channel_id, limit), None).await
+        
+        let mut endpoint = format!("/v9/channels/{}/messages?limit={}", channel_id, limit);
+        
+        if let Some(after) = after {
+            endpoint.push_str(&format!("&after={}", after));
+        }
+        
+        ctx.request(http::Method::GET, &endpoint, None).await
     }
-
+    
     pub async fn fetch_message(&self, ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
         Self::fetch_message_static(ctx, self.id, id).await
     }
