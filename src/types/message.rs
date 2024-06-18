@@ -7,10 +7,11 @@ use crate::types::{
     common::{Emoji, Resolved},
     poll::Poll,
     role::RoleSubscriptionData,
-    Snowflake,
     sticker::{Sticker, StickerItem},
-    user::User
+    user::User,
+    Snowflake,
 };
+use crate::types::timestamp::Timestamp;
 
 #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
@@ -173,13 +174,13 @@ pub struct InteractionMetadata {
 
     pub original_response_message_id: Option<Snowflake>,
     pub interacted_message_id: Option<Snowflake>,
-    pub triggering_interaction_metadata: Option<Box<InteractionMetadata>>
+    pub triggering_interaction_metadata: Option<Box<InteractionMetadata>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Call {
     pub participants: Vec<Snowflake>,
-    pub ended_timestamp: Option<String>, // ISO8601
+    pub ended_timestamp: Option<Timestamp>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -192,8 +193,8 @@ pub struct Message {
 
     pub author: Option<User>,
 
-    pub timestamp: String, // ISO8601
-    pub edited_timestamp: Option<String>,
+    pub timestamp: Timestamp,
+    pub edited_timestamp: Option<Timestamp>,
 
     pub tts: bool,
 
@@ -243,6 +244,7 @@ pub struct Message {
 
 pub mod embed {
     use serde::{Deserialize, Serialize};
+    use crate::types::timestamp::Timestamp;
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Footer {
@@ -298,7 +300,7 @@ pub mod embed {
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Field {
-        pub name: String, // 256 chars
+        pub name: String,  // 256 chars
         pub value: String, // 1024 chars
         pub inline: Option<bool>,
     }
@@ -311,7 +313,7 @@ pub mod embed {
         pub description: Option<String>, // 4096 chars
         pub url: Option<String>,
 
-        pub timestamp: Option<String>, // ISO8601
+        pub timestamp: Option<Timestamp>,
         pub color: Option<u32>,
 
         pub footer: Option<Footer>,
@@ -321,7 +323,7 @@ pub mod embed {
         pub provider: Option<Provider>,
         pub author: Option<Author>,
 
-        pub fields: Option<Vec<Field>> // 25 max
+        pub fields: Option<Vec<Field>>, // 25 max
     }
 }
 
@@ -409,8 +411,8 @@ pub mod component {
         pub channel_types: Option<Vec<ChannelType>>, // type 8
         pub placeholder: Option<String>,
         pub default_values: Option<Vec<DefaultValue>>, // type 5..=8
-        pub min_values: Option<u8>, // 0..=25
-        pub max_values: Option<u8>, // max 25
+        pub min_values: Option<u8>,                    // 0..=25
+        pub max_values: Option<u8>,                    // max 25
         pub disabled: Option<bool>,
     }
 
@@ -451,16 +453,13 @@ pub mod component {
     }
 }
 
-
 pub struct EmbedBuilder {
     value: Value,
 }
 
 impl EmbedBuilder {
     pub fn new() -> Self {
-        Self {
-            value: json!({}),
-        }
+        Self { value: json!({}) }
     }
 
     pub fn author(mut self, author: embed::Author) -> Self {
@@ -500,7 +499,7 @@ impl EmbedBuilder {
         self
     }
 
-    pub fn timestamp(mut self, timestamp: String) -> Self {
+    pub fn timestamp(mut self, timestamp: Timestamp) -> Self {
         self.value["timestamp"] = json!(timestamp);
         self
     }
@@ -557,7 +556,6 @@ impl EmbedBuilder {
         self
     }
 }
-
 
 pub struct MessageBuilder {
     value: Value,
@@ -624,6 +622,3 @@ impl MessageBuilder {
         self.value
     }
 }
-
-
-

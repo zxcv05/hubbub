@@ -86,7 +86,7 @@ impl<F, Model> Client<F, Model> where
             let mut ws = match self.ws.try_lock() {
                 Ok(ws) => ws,
                 Err(_) => {
-                    std::thread::sleep(Duration::from_millis(2));
+                    tokio::time::sleep(Duration::from_millis(2)).await;
                     continue;
                 },
             };
@@ -149,8 +149,7 @@ impl<F, Model> Client<F, Model> where
             }
 
             dispatch_queue.clear();
-
-            std::thread::sleep(Duration::from_millis(2));
+            tokio::time::sleep(Duration::from_millis(2)).await;
         }
     }
 }

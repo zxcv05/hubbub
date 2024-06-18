@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use crate::types::common::Emoji;
+use crate::types::timestamp::Timestamp;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Media {
@@ -37,7 +38,7 @@ pub struct Results {
 pub struct Poll {
     pub question: Media,
     pub answers: Vec<Answer>,
-    pub expiry: Option<String>, // ISO8601
+    pub expiry: Option<Timestamp>,
     pub allow_multiselect: bool,
     pub layout_type: LayoutType,
     pub results: Option<Results>,

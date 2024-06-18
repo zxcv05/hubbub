@@ -4,6 +4,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio::sync::MutexGuard;
 use crate::context::{Context, Response};
 use crate::error::Error;
+use crate::types::timestamp::Timestamp;
 
 use super::{user::User, Snowflake};
 
@@ -45,11 +46,11 @@ pub enum VideoQualityMode {
 pub struct ThreadMetadata {
     pub archived: bool,
     pub auto_archive_duration: u64, // in minutes
-    pub archive_timestamp: String, // ISO8601
+    pub archive_timestamp: Timestamp,
     pub locked: bool,
 
     // Threads > 2022-01-09
-    pub create_timestamp: Option<String>, // ISO8601
+    pub create_timestamp: Option<Timestamp>,
 
     // Private threads
     pub invitable: Option<bool>,
@@ -60,7 +61,7 @@ pub struct ThreadMember {
     pub id: Option<Snowflake>,
     pub user_id: Option<Snowflake>,
     
-    pub join_timestamp: String, // ISO8601
+    pub join_timestamp: Timestamp,
     pub flags: u64, // notifications
     // pub member: Option<GuildMember>,
 }
@@ -127,7 +128,7 @@ pub struct Channel {
     pub parent_id: Option<Snowflake>, // category id
 
     pub last_message_id: Option<String>,
-    pub last_pin_timestamp: Option<String>, // iso8601
+    pub last_pin_timestamp: Option<Timestamp>,
     
     #[serde(rename = "safety_warnings")]
     pub warnings: Option<Vec<String>>,
@@ -135,7 +136,7 @@ pub struct Channel {
     #[serde(default = "default_spam_value")]
     pub is_spam: bool,
 
-    pub permission_overwrites: Option<Vec<PermissionOverwrite>>, // TODO
+    pub permission_overwrites: Option<Vec<PermissionOverwrite>>,
     
     #[serde(rename = "type")]
     pub channel_type: ChannelType,

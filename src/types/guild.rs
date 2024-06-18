@@ -4,6 +4,7 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio::sync::MutexGuard;
 use crate::context::{Context, Response};
 use crate::error::Error;
+use crate::types::timestamp::Timestamp;
 use crate::types::user::{AvatarDecorationData, User};
 
 use super::{channel::{Channel, welcome_screen::WelcomeScreen}, common::Emoji, role::Role, sticker::Sticker, Snowflake};
@@ -343,7 +344,7 @@ impl Guild {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CachedGuild {
     pub id: Snowflake,
-    pub joined_at: String,
+    pub joined_at: Timestamp,
 
     pub properties: Guild, // Partial
     
@@ -396,14 +397,14 @@ pub struct GuildMember {
     pub nick: Option<String>,
     pub avatar: Option<String>,
     pub roles: Vec<Snowflake>,
-    pub joined_at: String, // ISO8601
-    pub premium_since: Option<String>, // ISO8601
+    pub joined_at: Timestamp,
+    pub premium_since: Option<Timestamp>,
     pub deaf: bool,
     pub mute: bool,
     pub flags: GuildMemberFlags,
     pub pending: bool,
     pub permissions: String,
-    pub communication_disabled_until: Option<String>, // ISO8601
+    pub communication_disabled_until: Option<Timestamp>,
     pub avatar_decoration_data: Option<AvatarDecorationData>
 }
 

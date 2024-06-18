@@ -5,7 +5,7 @@ use serde_json::Value as JSON;
 
 use crate::types::{guild::CachedGuild, user::{BotUser, User}};
 
-static BASE_URL: &'static str = "https://discord.com/";
+static BASE_URL: &str = "https://discord.com/";
 
 
 #[derive(Debug)]

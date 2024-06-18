@@ -1,13 +1,10 @@
 use std::fmt::Display;
+use std::num::ParseIntError;
 use std::str::FromStr;
 
-use serde::{de, Deserialize, Deserializer, Serialize};
-
-use crate::prelude::Error;
-
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 pub static DISCORD_EPOCH: u128 = 1420070400000;
-
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Clone, Copy, Hash)]
 pub struct Snowflake(u64);
@@ -19,30 +16,34 @@ impl Display for Snowflake {
 }
 impl From<String> for Snowflake {
     fn from(value: String) -> Self {
-        Self(u64::from_str_radix(value.as_str(), 10).expect("Couldn't parse snowflake from string"))
+        Self(value.parse().expect("Couldn't parse snowflake from string"))
     }
 }
 
 impl FromStr for Snowflake {
-    type Err = Error;
+    type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self(u64::from_str_radix(s, 10).expect("Couldn't parse snowflake from string")))
+        Ok(Self(s.parse()?))
     }
 }
 
 impl<'de> Deserialize<'de> for Snowflake {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de> {
-        String::deserialize(deserializer)?.parse().map_err(de::Error::custom)
+        D: Deserializer<'de>,
+    {
+        String::deserialize(deserializer)?
+            .parse()
+            .map_err(de::Error::custom)
     }
 }
 
 impl Serialize for Snowflake {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer {
+        S: Serializer,
+    {
         serializer.collect_str(&self.0.to_string())
     }
 }
@@ -64,5 +65,3 @@ impl Snowflake {
         (self.0 & 0xFFF) as u16
     }
 }
-
-

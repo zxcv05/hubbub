@@ -11,5 +11,6 @@ pub mod sticker;
 pub mod user;
 
 mod snowflake;
+mod timestamp;
 
 pub use snowflake::Snowflake;

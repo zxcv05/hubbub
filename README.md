@@ -6,7 +6,7 @@ Rust library for creating discord self-bots (very early in development)
 - Connects to gateway with token
 - Supports reconnecting to gateway (untested, should work)
 - Supports making calls to discords http api
-- Supports sending and recieving gateway events
+- Supports sending and receiving gateway events
 - *Some* of discord's many, MANY, data structures have been translated into serde-compatible structs
 
 ## Using the library
