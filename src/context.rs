@@ -27,8 +27,8 @@ pub struct Context {
     pub user: Option<BotUser>,
     pub resume_info: Option<ResumeInfo>,
     pub cache: Cache,
+    pub auth: Option<String>,
     client: reqwest::Client,
-    auth: Option<String>,
 }
 
 

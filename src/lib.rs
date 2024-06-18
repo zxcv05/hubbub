@@ -108,6 +108,7 @@ impl<F, Model> Client<F, Model> where
                         let ctx = self.ctx.lock().await;
                         let seq = ws.sequence;
                         *ws = Websocket::new_with(&(ctx.resume_info.as_ref().unwrap().url), seq.unwrap()).await?;
+                        ws.token(ctx.auth.as_ref().unwrap().clone());
                         ws.resume(ctx.resume_info.as_ref().unwrap()).await?;
                     }
                     11 => {
