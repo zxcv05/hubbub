@@ -172,6 +172,10 @@ impl Channel {
     pub fn is_category(&self) -> bool {
         self.channel_type == ChannelType::Category
     }
+    
+    /**
+    * Channel
+    */
 
     pub async fn fetch_channel(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
         ctx.request(http::Method::GET, &format!("/v9/channels/{}", id), None).await
@@ -183,6 +187,10 @@ impl Channel {
     pub async fn delete_channel_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
         ctx.request(http::Method::DELETE, &format!("/v9/channels/{}", id), None).await
     }
+    
+    /**
+    * Message
+    */
 
     pub async fn send_message(&self, ctx: &mut MutexGuard<'_, Context>, msg: Value) -> anyhow::Result<Response> {
         Self::send_message_static(ctx, self.id, msg).await
@@ -213,6 +221,14 @@ impl Channel {
     }
     pub async fn fetch_message_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, id: Snowflake) -> anyhow::Result<Response> {
         ctx.request(http::Method::GET, &format!("/v9/channels/{}/messages/{}", channel_id, id), None).await
+    }
+    
+    pub async fn delete_message(self, ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+        Self::delete_message_static(ctx, self.id, id).await
+    }
+    
+    pub async fn delete_message_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, id: Snowflake) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/channels/{}/messages/{}", channel_id, id), None).await
     }
 }
 
