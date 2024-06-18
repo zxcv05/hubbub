@@ -378,7 +378,7 @@ pub struct CachedGuild {
 
 impl CachedGuild {
     pub async fn into_guild(self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Guild> {
-        Ok(serde_json::from_value(Guild::fetch_guild(ctx, self.id).await?.content)?)
+        Ok(serde_json::from_value(Guild::fetch_guild(ctx, self.id).await?.body)?)
     }
 }
 

@@ -56,7 +56,7 @@ impl Default for Context {
 #[derive(Debug)]
 pub struct Response {
     pub status: StatusCode,
-    pub content: JSON
+    pub body: JSON
 }
 
 impl Context {
@@ -88,7 +88,7 @@ impl Context {
 
         Ok(Response {
             status,
-            content: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null)
+            body: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null)
         })
     }
 }

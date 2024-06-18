@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
                 let resp = ctx.request(Method::GET, "/v9/users/@me", None).await.expect("Couldn't send API request");
                 println!("{resp:#?}");
 
-                println!("\nBio:\n{}", resp.content["bio"].as_str().unwrap());
+                println!("\nBio:\n{}", resp.body["bio"].as_str().unwrap());
 
                 exit(0);
             }

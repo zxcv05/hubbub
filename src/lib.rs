@@ -48,8 +48,8 @@ impl<F, Model> Client<F, Model> where
         match ctx.request(http::Method::GET, "/v9/users/@me", None).await {
             Ok(r) => {
                 // If return value was an error
-                if r.content.get("code").is_some() && r.content.get("message").is_some() {
-                    Err(Error::InvalidToken(r.content.get("message").unwrap().as_str().unwrap().to_string()).into())
+                if r.body.get("code").is_some() && r.body.get("message").is_some() {
+                    Err(Error::InvalidToken(r.body.get("message").unwrap().as_str().unwrap().to_string()).into())
                 } else {
                     Ok(())
                 }
