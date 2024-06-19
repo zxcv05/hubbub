@@ -1,7 +1,7 @@
-use std::fmt::Display;
+use crate::types::Snowflake;
 use chrono::{DateTime, FixedOffset};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use crate::types::Snowflake;
+use std::fmt::Display;
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Timestamp(pub DateTime<FixedOffset>);
@@ -60,7 +60,10 @@ impl Serialize for Timestamp {
 impl From<Snowflake> for Timestamp {
     fn from(value: Snowflake) -> Self {
         let ms = value.timestamp();
-        Self(DateTime::from_timestamp(ms as i64 / 1000, (ms % 1000) as u32 * 1_000_000).unwrap().into())
+        Self(
+            DateTime::from_timestamp(ms as i64 / 1000, (ms % 1000) as u32 * 1_000_000)
+                .unwrap()
+                .into(),
+        )
     }
 }
-

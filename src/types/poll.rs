@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 use crate::types::common::Emoji;
 use crate::types::timestamp::Timestamp;
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Media {
@@ -25,7 +25,7 @@ pub struct AnswerCount {
 #[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum LayoutType {
-    Default = 1
+    Default = 1,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -43,4 +43,3 @@ pub struct Poll {
     pub layout_type: LayoutType,
     pub results: Option<Results>,
 }
-

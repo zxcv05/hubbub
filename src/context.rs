@@ -3,10 +3,12 @@ use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use reqwest::Url;
 use serde_json::Value as JSON;
 
-use crate::types::{guild::CachedGuild, user::{BotUser, User}};
+use crate::types::{
+    guild::CachedGuild,
+    user::{BotUser, User},
+};
 
 static BASE_URL: &str = "https://discord.com/";
-
 
 #[derive(Debug)]
 pub struct ResumeInfo {
@@ -14,13 +16,11 @@ pub struct ResumeInfo {
     pub id: String,
 }
 
-
 #[derive(Default, Debug)]
 pub struct Cache {
     pub users: Vec<User>,
     pub guilds: Vec<CachedGuild>,
 }
-
 
 #[derive(Debug)]
 pub struct Context {
@@ -31,12 +31,14 @@ pub struct Context {
     client: reqwest::Client,
 }
 
-
 impl Default for Context {
     fn default() -> Self {
         let mut headers: HeaderMap<HeaderValue> = HeaderMap::with_capacity(8);
         headers.insert("Referrer", HeaderValue::from_static("https://discord.com"));
-        headers.insert("Sec-Ch-Ua", HeaderValue::from_static(r#""Not(A:Brand";v="24", "Chromium";v="122""#));
+        headers.insert(
+            "Sec-Ch-Ua",
+            HeaderValue::from_static(r#""Not(A:Brand";v="24", "Chromium";v="122""#),
+        );
         headers.insert("Sec-Ch-Ua-Mobile", HeaderValue::from_static("?0"));
         headers.insert("Sec-Ch-Ua-Platform", HeaderValue::from_static("\"Linux\""));
 
@@ -56,7 +58,7 @@ impl Default for Context {
 #[derive(Debug)]
 pub struct Response {
     pub status: StatusCode,
-    pub body: JSON
+    pub body: JSON,
 }
 
 impl Context {
@@ -64,10 +66,18 @@ impl Context {
         self.auth = Some(token);
     }
 
-    pub async fn request(&mut self, method: Method, endpoint: &str, body: Option<JSON>) -> Result<Response> {
+    pub async fn request(
+        &mut self,
+        method: Method,
+        endpoint: &str,
+        body: Option<JSON>,
+    ) -> Result<Response> {
         log::debug!(">> {} {}", method, endpoint);
 
-        let builder = self.client.request(method, Url::parse(BASE_URL)?.join(format!("/api/{}", endpoint).as_str())?);
+        let builder = self.client.request(
+            method,
+            Url::parse(BASE_URL)?.join(format!("/api/{}", endpoint).as_str())?,
+        );
 
         let builder = match &self.auth {
             Some(a) => builder.header("Authorization", HeaderValue::from_str(a.as_str())?),
@@ -75,7 +85,9 @@ impl Context {
         };
 
         let builder = match body {
-            Some(b) => builder.body(serde_json::to_vec(&b)?).header("Content-Type", HeaderValue::from_str("application/json")?),
+            Some(b) => builder
+                .body(serde_json::to_vec(&b)?)
+                .header("Content-Type", HeaderValue::from_str("application/json")?),
             None => builder,
         };
 
@@ -88,8 +100,7 @@ impl Context {
 
         Ok(Response {
             status,
-            body: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null)
+            body: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null),
         })
     }
 }
-

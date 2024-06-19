@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
+use crate::types::message::embed::Embed;
+use crate::types::timestamp::Timestamp;
 use crate::types::{
     channel::{Channel, ChannelMention},
     common::{Emoji, Resolved},
@@ -11,7 +13,6 @@ use crate::types::{
     user::User,
     Snowflake,
 };
-use crate::types::timestamp::Timestamp;
 
 #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
@@ -204,7 +205,7 @@ pub struct Message {
     pub mention_everyone: bool,
 
     pub attachments: Vec<Attachment>,
-    pub embeds: Vec<embed::Embed>,
+    pub embeds: Vec<Embed>,
     pub reactions: Option<Vec<Reaction>>,
     pub nonce: Option<String>, // String "or integer"
 
@@ -243,8 +244,8 @@ pub struct Message {
 }
 
 pub mod embed {
-    use serde::{Deserialize, Serialize};
     use crate::types::timestamp::Timestamp;
+    use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Footer {
@@ -253,6 +254,26 @@ pub mod embed {
         #[serde(rename = "proxy_icon_url")]
         pub icon_proxy_url: Option<String>,
         pub icon_url: Option<String>,
+    }
+
+    impl Footer {
+        pub fn new(text: &str) -> Self {
+            Self {
+                text: text.to_string(),
+                icon_proxy_url: None,
+                icon_url: None,
+            }
+        }
+
+        pub fn icon(mut self, url: String) -> Self {
+            self.icon_url = Some(url);
+            self
+        }
+
+        pub fn icon_proxy(mut self, url: String) -> Self {
+            self.icon_proxy_url = Some(url);
+            self
+        }
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -288,6 +309,20 @@ pub mod embed {
         pub url: Option<String>,
     }
 
+    impl Provider {
+        pub fn new(name: &str, url: String) -> Self {
+            Self {
+                name: Some(name.to_string()),
+                url: Some(url),
+            }
+        }
+
+        pub fn url(mut self, url: String) -> Self {
+            self.url = Some(url);
+            self
+        }
+    }
+
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Author {
         pub name: String, // 256 chars
@@ -298,11 +333,52 @@ pub mod embed {
         pub icon_url: Option<String>,
     }
 
+    impl Author {
+        pub fn new(name: &str) -> Self {
+            Self {
+                name: name.to_string(),
+                url: None,
+                icon_proxy_url: None,
+                icon_url: None,
+            }
+        }
+
+        pub fn url(mut self, url: String) -> Self {
+            self.url = Some(url);
+            self
+        }
+
+        pub fn icon_proxy_url(mut self, icon_proxy_url: String) -> Self {
+            self.icon_proxy_url = Some(icon_proxy_url);
+            self
+        }
+
+        pub fn icon_url(mut self, icon_url: String) -> Self {
+            self.icon_url = Some(icon_url);
+            self
+        }
+    }
+
     #[derive(Serialize, Deserialize, Debug)]
     pub struct Field {
         pub name: String,  // 256 chars
         pub value: String, // 1024 chars
         pub inline: Option<bool>,
+    }
+
+    impl Field {
+        pub fn new(name: &str, value: &str) -> Self {
+            Self {
+                name: name.to_string(),
+                value: value.to_string(),
+                inline: None,
+            }
+        }
+
+        pub fn inline(mut self, inline: bool) -> Self {
+            self.inline = Some(inline);
+            self
+        }
     }
 
     // Max length of all text cannot exceed 6000 chars
@@ -329,7 +405,7 @@ pub mod embed {
 
 pub mod component {
     use serde::{Deserialize, Serialize};
-    use serde_json::Value;
+    use serde_json::{json, Value};
     use serde_repr::{Deserialize_repr, Serialize_repr};
 
     use crate::prelude::Snowflake;
@@ -356,6 +432,27 @@ pub mod component {
         pub components: Option<Vec<Value>>,
     }
 
+    impl ActionRow {
+        pub fn new() -> Self {
+            Self {
+                _type: ComponentType::ActionRow,
+                components: None,
+            }
+        }
+
+        pub fn add_component(mut self, component: Component) -> Self {
+            if self.components.is_none() {
+                self.components = Some(Vec::new());
+            }
+
+            self.components
+                .as_mut()
+                .unwrap()
+                .push(json!(component.build()));
+            self
+        }
+    }
+
     #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
     #[repr(u8)]
     pub enum ButtonStyle {
@@ -376,6 +473,40 @@ pub mod component {
         pub custom_id: Option<String>,
         pub url: Option<String>,
         pub disabled: Option<bool>,
+    }
+
+    impl Button {
+        pub fn new(id: &str, style: ButtonStyle) -> Self {
+            Self {
+                _type: ComponentType::Button,
+                custom_id: Some(id.to_string()),
+                style,
+                label: None,
+                emoji: None,
+                url: None,
+                disabled: None,
+            }
+        }
+
+        pub fn label(mut self, label: String) -> Self {
+            self.label = Some(label);
+            self
+        }
+
+        pub fn emoji(mut self, emoji: Emoji) -> Self {
+            self.emoji = Some(emoji);
+            self
+        }
+
+        pub fn url(mut self, url: String) -> Self {
+            self.url = Some(url);
+            self
+        }
+
+        pub fn disabled(mut self, disabled: bool) -> Self {
+            self.disabled = Some(disabled);
+            self
+        }
     }
 
     #[derive(Serialize, Deserialize, Debug)]
@@ -406,7 +537,7 @@ pub mod component {
     pub struct SelectMenu {
         #[serde(rename = "type")]
         _type: ComponentType,
-        pub custom_id: Option<String>,
+        pub custom_id: String,
         pub options: Option<Vec<SelectOption>>, // max 25, type 3
         pub channel_types: Option<Vec<ChannelType>>, // type 8
         pub placeholder: Option<String>,
@@ -414,6 +545,112 @@ pub mod component {
         pub min_values: Option<u8>,                    // 0..=25
         pub max_values: Option<u8>,                    // max 25
         pub disabled: Option<bool>,
+    }
+
+    impl SelectMenu {
+        pub fn text(id: &str, options: Vec<SelectOption>) -> Self {
+            Self {
+                _type: ComponentType::StringSelect,
+                options: Some(options),
+                custom_id: id.to_string(),
+                placeholder: None,
+                channel_types: None,
+                default_values: None,
+                min_values: None,
+                max_values: None,
+                disabled: None,
+            }
+        }
+
+        pub fn user(id: &str, options: Vec<SelectOption>) -> Self {
+            Self {
+                _type: ComponentType::UserSelect,
+                options: Some(options),
+                placeholder: None,
+                custom_id: id.to_string(),
+                channel_types: None,
+                default_values: None,
+                min_values: None,
+                max_values: None,
+                disabled: None,
+            }
+        }
+
+        pub fn role(id: &str, options: Vec<SelectOption>) -> Self {
+            Self {
+                _type: ComponentType::RoleSelect,
+                options: Some(options),
+                placeholder: None,
+                custom_id: id.to_string(),
+                channel_types: None,
+                default_values: None,
+                min_values: None,
+                max_values: None,
+                disabled: None,
+            }
+        }
+
+        pub fn mentionable(id: &str, options: Vec<SelectOption>) -> Self {
+            Self {
+                _type: ComponentType::MentionableSelect,
+                options: Some(options),
+                placeholder: None,
+                custom_id: id.to_string(),
+                channel_types: None,
+                default_values: None,
+                min_values: None,
+                max_values: None,
+                disabled: None,
+            }
+        }
+
+        pub fn channel(id: &str, options: Vec<SelectOption>) -> Self {
+            Self {
+                _type: ComponentType::ChannelSelect,
+                options: Some(options),
+                placeholder: None,
+                custom_id: id.to_string(),
+                channel_types: None,
+                default_values: None,
+                min_values: None,
+                max_values: None,
+                disabled: None,
+            }
+        }
+
+        pub fn channel_types(mut self, channel_types: Vec<ChannelType>) -> Self {
+            if self._type != ComponentType::ChannelSelect {
+                panic!("Channel types can only be set for ChannelSelect components");
+            }
+
+            self.channel_types = Some(channel_types);
+            self
+        }
+
+        pub fn default_values(mut self, default_values: Vec<DefaultValue>) -> Self {
+            self.default_values = Some(default_values);
+            self
+        }
+
+        pub fn placeholder(mut self, placeholder: &str) -> Self {
+            if self._type != ComponentType::StringSelect {
+                panic!("Placeholder can only be set for StringSelect components");
+            }
+
+            self.placeholder = Some(placeholder.to_string());
+            self
+        }
+
+        pub fn limits(mut self, min: u8, max: u8) -> Self {
+            self.min_values = Some(min);
+            self.max_values = Some(max);
+            self
+        }
+
+        pub fn disabled(mut self, disabled: bool) -> Self {
+            self.disabled = Some(disabled);
+            self
+        }
     }
 
     #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
@@ -440,6 +677,48 @@ pub mod component {
         pub required: Option<bool>,
     }
 
+    impl TextInput {
+        pub fn new(custom_id: &str, label: &str) -> Self {
+            Self {
+                _type: ComponentType::TextInput,
+                custom_id: custom_id.to_string(),
+                style: TextInputStyle::Short,
+                label: label.to_string(),
+                value: None,
+                placeholder: None,
+                min_length: None,
+                max_length: None,
+                required: None,
+            }
+        }
+
+        pub fn style(mut self, style: TextInputStyle) -> Self {
+            self.style = style;
+            self
+        }
+
+        pub fn placeholder(mut self, placeholder: &str) -> Self {
+            self.placeholder = Some(placeholder.to_string());
+            self
+        }
+
+        pub fn value(mut self, value: &str) -> Self {
+            self.value = Some(value.to_string());
+            self
+        }
+
+        pub fn limits(mut self, min: u16, max: u16) -> Self {
+            self.min_length = Some(min);
+            self.max_length = Some(max);
+            self
+        }
+
+        pub fn required(mut self, required: bool) -> Self {
+            self.required = Some(required);
+            self
+        }
+    }
+
     #[derive(Serialize, Deserialize, Debug)]
     pub enum Component {
         ActionRow(ActionRow),
@@ -450,6 +729,21 @@ pub mod component {
         RoleSelect(SelectMenu),
         MentionableSelect(SelectMenu),
         ChannelSelect(SelectMenu),
+    }
+
+    impl Component {
+        pub fn build(self) -> Value {
+            match self {
+                Component::ActionRow(action_row) => json!(action_row),
+                Component::Button(button) => json!(button),
+                Component::StringSelect(select_menu) => json!(select_menu),
+                Component::TextInput(text_input) => json!(text_input),
+                Component::UserSelect(select_menu) => json!(select_menu),
+                Component::RoleSelect(select_menu) => json!(select_menu),
+                Component::MentionableSelect(select_menu) => json!(select_menu),
+                Component::ChannelSelect(select_menu) => json!(select_menu),
+            }
+        }
     }
 }
 
@@ -471,7 +765,7 @@ impl EmbedBuilder {
         self
     }
 
-    pub fn title(mut self, title: String) -> Self {
+    pub fn title(mut self, title: &str) -> Self {
         if title.len() > 256 {
             panic!("Title must be less than 256 characters");
         }
@@ -480,7 +774,7 @@ impl EmbedBuilder {
         self
     }
 
-    pub fn description(mut self, description: String) -> Self {
+    pub fn description(mut self, description: &str) -> Self {
         if description.len() > 4096 {
             panic!("Description must be less than 4096 characters");
         }
@@ -555,6 +849,10 @@ impl EmbedBuilder {
         self.value["fields"] = json!(fields);
         self
     }
+
+    pub fn build(self) -> Value {
+        self.value
+    }
 }
 
 pub struct MessageBuilder {
@@ -566,7 +864,6 @@ impl MessageBuilder {
         Self {
             value: json!({
                 "content": content,
-                "flags": 0,
             }),
         }
     }
@@ -582,7 +879,22 @@ impl MessageBuilder {
         self
     }
 
-    pub fn add_embed(mut self, embed: embed::Embed) -> Self {
+    pub fn add_embed_from(mut self, embed: EmbedBuilder) -> Self {
+        let embeds = match self.value["embeds"].as_array_mut() {
+            None => &mut Vec::new(),
+            Some(v) => v,
+        };
+
+        if embeds.len() == 10 {
+            panic!("Can't have more than 10 embeds in one message");
+        }
+
+        embeds.push(embed.build());
+        self.value["embeds"] = json!(embeds);
+        self
+    }
+
+    pub fn add_embed(mut self, embed: Embed) -> Self {
         let embeds = match self.value["embeds"].as_array_mut() {
             None => &mut Vec::new(),
             Some(v) => v,
@@ -610,6 +922,16 @@ impl MessageBuilder {
 
     pub fn reference(mut self, message_reference: Reference) -> Self {
         self.value["message_reference"] = json!(message_reference);
+        self
+    }
+
+    pub fn reference_to(mut self, message: &Message, fail: bool) -> Self {
+        self.value["message_reference"] = json!({
+            "message_id": message.id,
+            "channel_id": message.channel_id,
+            "guild_id": message.guild_id,
+            "fail_if_not_exists": fail
+        });
         self
     }
 

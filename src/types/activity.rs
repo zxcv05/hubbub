@@ -4,29 +4,27 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use super::common::Emoji;
 
-
 #[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum ActivityType {
-    Game = 0, // Playing {name}
-    Steaming = 1, // Streaming {details}
+    Game = 0,      // Playing {name}
+    Steaming = 1,  // Streaming {details}
     Listening = 2, // Listening to {name}
-    Watching = 3, // Watching {name}
-    Custom = 4, // {emoji} {state}
+    Watching = 3,  // Watching {name}
+    Custom = 4,    // {emoji} {state}
     Competing = 5, // Competing in {name}
 }
-
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Timestamps {
     pub start: Option<u64>, // ms
-    pub end: Option<u64> // ms
+    pub end: Option<u64>,   // ms
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Party {
     pub id: Option<String>,
-    pub size: Option<[u64;2]> // [current_size, max_size],
+    pub size: Option<[u64; 2]>, // [current_size, max_size],
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -50,21 +48,21 @@ pub struct Secrets {
 #[derive(Serialize_repr, Deserialize_repr, Debug)]
 #[repr(u16)]
 pub enum ActivityFlag {
-    Instance        = 1 << 0,
-    Join            = 1 << 1,
-    Spectate        = 1 << 2,
-    JoinReq         = 1 << 3,
-    Sync            = 1 << 4,
-    Play            = 1 << 5,
-    PrivacyFriends  = 1 << 6,
-    PrivacyVC       = 1 << 7,
-    Embedded        = 1 << 8,
+    Instance = 1 << 0,
+    Join = 1 << 1,
+    Spectate = 1 << 2,
+    JoinReq = 1 << 3,
+    Sync = 1 << 4,
+    Play = 1 << 5,
+    PrivacyFriends = 1 << 6,
+    PrivacyVC = 1 << 7,
+    Embedded = 1 << 8,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Button {
     pub label: String, // 1-32 limit
-    pub url: String, // 1-512 limit
+    pub url: String,   // 1-512 limit
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -89,7 +87,7 @@ pub struct Activity {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ActivityBuilder {
-    value: Value
+    value: Value,
 }
 
 impl ActivityBuilder {
@@ -98,7 +96,7 @@ impl ActivityBuilder {
             value: json!({
                 "name": name,
                 "type": activity_type
-            })
+            }),
         }
     }
 
@@ -139,7 +137,7 @@ impl ActivityBuilder {
     pub fn add_button(&mut self, label: String, url: String) {
         let buttons = match self.value["buttons"].as_array_mut() {
             Some(v) => v,
-            None => &mut Vec::new()
+            None => &mut Vec::new(),
         };
 
         if label.len() > 32 {
@@ -165,4 +163,3 @@ impl ActivityBuilder {
         self.value
     }
 }
-

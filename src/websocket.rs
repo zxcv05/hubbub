@@ -1,31 +1,28 @@
-
 use crate::{context::ResumeInfo, error::Error};
 
 use anyhow::Result;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
+use reqwest_websocket::{websocket, Message, WebSocket as WS};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value as JSON};
-use tokio::sync::Mutex;
 use std::{collections::VecDeque, sync::Arc, time::Duration};
-use reqwest_websocket::{websocket, Message, WebSocket as WS};
-
+use tokio::sync::Mutex;
 
 static DISCORD_WS_URI: &str = "wss://gateway.discord.gg/?encoding=json&v=9";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DiscordMessage {
     pub op: u8,
-    
+
     #[serde(rename = "d")]
     pub data: JSON,
-    
+
     #[serde(rename = "s", skip_serializing)]
     pub seq: Option<u64>,
 
     #[serde(rename = "t", skip_serializing)]
-    pub event: Option<String>
+    pub event: Option<String>,
 }
-
 
 pub struct StreamCtrl {
     s: WS,
@@ -58,7 +55,7 @@ impl StreamCtrl {
                         let mut rxq = rxq.lock().await;
                         rxq.close().await.expect("Couldn't close sink");
                         panic!("{e:?}");
-                    },
+                    }
                 };
 
                 if let Some(msg) = resp {
@@ -82,14 +79,14 @@ impl StreamCtrl {
                     Err(_) => {
                         tokio::time::sleep(Duration::from_millis(5)).await;
                         continue;
-                    },
+                    }
                 };
-    
+
                 while let Some(msg) = txq.pop_front() {
                     log::trace!(">>\n{msg:?}");
                     tx.feed(msg).await.expect("Couldn't feed tx");
                 }
-                
+
                 if let Err(e) = tx.flush().await {
                     txq.close().await.expect("Couldn't close stream");
                     panic!("{e:?}");
@@ -110,18 +107,20 @@ type Queue = Arc<Mutex<VecDeque<Message>>>;
 pub struct Websocket {
     // tx, rx
     pub q: (Queue, Queue),
-    
+
     pub ready: bool,
-    
+
     pub heartbeat: u64,
     pub sequence: Option<u64>,
-    
+
     token: Option<String>,
 }
 
 impl Websocket {
     pub async fn new() -> Result<Self> {
-        let (tx, rx) = StreamCtrl::new(websocket(DISCORD_WS_URI).await?).start().await;
+        let (tx, rx) = StreamCtrl::new(websocket(DISCORD_WS_URI).await?)
+            .start()
+            .await;
 
         Ok(Self {
             ready: false,
@@ -133,14 +132,17 @@ impl Websocket {
     }
 
     pub async fn new_with(resume_gateway: &String, sequence: u64) -> Result<Self> {
-        let (tx, rx) = StreamCtrl::new(websocket(format!("{}?encoding=json&v=9", resume_gateway)).await?).start().await;
+        let (tx, rx) =
+            StreamCtrl::new(websocket(format!("{}?encoding=json&v=9", resume_gateway)).await?)
+                .start()
+                .await;
 
         Ok(Self {
             ready: false,
             token: None,
             heartbeat: 0,
             sequence: Some(sequence),
-            q: (tx, rx)
+            q: (tx, rx),
         })
     }
 
@@ -153,7 +155,6 @@ impl Websocket {
 
         let mut lock = self.q.0.lock().await;
         lock.push_back(msg);
-        drop(lock);
 
         Ok(())
     }
@@ -168,7 +169,7 @@ impl Websocket {
                 continue;
             }
 
-            break Ok(Self::parse_message(lock.pop_front().unwrap())?)
+            break Ok(Self::parse_message(lock.pop_front().unwrap())?);
         }
     }
 
@@ -180,7 +181,6 @@ impl Websocket {
             None => None,
         })
     }
-
 
     pub fn parse_message(msg: Message) -> Result<DiscordMessage> {
         Ok(match msg {
@@ -204,7 +204,7 @@ impl Websocket {
 
             seq: None,
             event: None,
-        }        
+        }
     }
 
     pub fn identify_packet(&self) -> DiscordMessage {
@@ -247,7 +247,6 @@ impl Websocket {
         }
     }
 
-
     pub async fn initiate(&mut self) -> Result<()> {
         if self.token.is_none() {
             return Err(Error::NoTokenGiven.into());
@@ -256,8 +255,10 @@ impl Websocket {
         log::debug!("Initiating connection");
 
         let hello = self.read().await?;
-        self.heartbeat = hello.data["heartbeat_interval"].as_u64().expect("Invalid heartbeat interval");
-    
+        self.heartbeat = hello.data["heartbeat_interval"]
+            .as_u64()
+            .expect("Invalid heartbeat interval");
+
         self.heartbeat().await?;
         let _ = self.read().await?;
 
@@ -269,7 +270,7 @@ impl Websocket {
 
         log::debug!("Sending identify packet");
         self.send(self.identify_packet()).await?;
-        
+
         Ok(())
     }
 
@@ -283,7 +284,6 @@ impl Websocket {
     }
 
     pub async fn heartbeat(&mut self) -> Result<()> {
-        log::debug!("Sending heartbeat");
         self.send(DiscordMessage {
             op: 1,
             data: match self.sequence {
@@ -293,10 +293,11 @@ impl Websocket {
 
             seq: None,
             event: None,
-        }).await.expect("Couldn't send heartbeat");
+        })
+        .await
+        .expect("Couldn't send heartbeat");
+        log::debug!("Sending heartbeat");
 
         Ok(())
     }
 }
-
-

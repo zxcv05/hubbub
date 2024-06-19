@@ -1,35 +1,37 @@
-
 pub mod context;
 pub mod error;
 pub mod prelude;
 pub mod types;
 pub mod websocket;
 
+use crate::prelude::{Ctx, Model, Ws};
 use anyhow::Result;
 use context::{Context, ResumeInfo};
 use error::Error;
 use futures_util::Future;
+use std::{cmp::max, collections::VecDeque, sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use types::gateway::Ready;
 use websocket::{DiscordMessage, Websocket};
-use std::{cmp::max, collections::VecDeque, sync::Arc, time::Duration};
-use crate::prelude::{Ctx, Model, Ws};
 
+pub type Handler<F, M> = dyn Fn(Ctx, Ws, Model<M>, DiscordMessage) -> F;
 
-pub type Handler<F,M> = dyn Fn(Ctx, Ws, Model<M>, DiscordMessage) -> F;
-
-pub struct Client<F, Model> where
+pub struct Client<F, Model>
+where
     F: Future + Send + 'static,
-    F::Output: Send + 'static {
+    F::Output: Send + 'static,
+{
     ws: Arc<Mutex<Websocket>>,
     ctx: Arc<Mutex<Context>>,
     handler: Box<Handler<F, Model>>,
-    model: Arc<Mutex<Model>>
+    model: Arc<Mutex<Model>>,
 }
 
-impl<F, Model> Client<F, Model> where
+impl<F, Model> Client<F, Model>
+where
     F: Future + Send + 'static,
-    F::Output: Send + 'static {
+    F::Output: Send + 'static,
+{
     pub async fn new(model: Model, handler: Box<Handler<F, Model>>) -> Result<Self> {
         Ok(Self {
             ws: Arc::new(Mutex::from(Websocket::new().await?)),
@@ -41,7 +43,7 @@ impl<F, Model> Client<F, Model> where
 
     pub async fn token(&mut self, token: String) -> Result<()> {
         self.ws.lock().await.token(token.clone());
-        
+
         let mut ctx = self.ctx.lock().await;
         ctx.set_auth(token);
 
@@ -49,11 +51,14 @@ impl<F, Model> Client<F, Model> where
             Ok(r) => {
                 // If return value was an error
                 if r.body.get("code").is_some() && r.body.get("message").is_some() {
-                    Err(Error::InvalidToken(r.body.get("message").unwrap().as_str().unwrap().to_string()).into())
+                    Err(Error::InvalidToken(
+                        r.body.get("message").unwrap().as_str().unwrap().to_string(),
+                    )
+                    .into())
                 } else {
                     Ok(())
                 }
-            },
+            }
             Err(e) => Err(e.context("Failed validating token")),
         }
     }
@@ -70,7 +75,7 @@ impl<F, Model> Client<F, Model> where
         let hb = ws.heartbeat;
         tokio::task::spawn(async move {
             let mut i = async_timer::Interval::platform_new(Duration::from_millis(hb));
-            
+
             loop {
                 i.as_mut().await;
 
@@ -88,17 +93,21 @@ impl<F, Model> Client<F, Model> where
                 Err(_) => {
                     tokio::time::sleep(Duration::from_millis(2)).await;
                     continue;
-                },
+                }
             };
 
             let mut seq = ws.sequence;
             while let Some(msg) = ws.try_read().await? {
                 match msg.op {
                     0 => {
-                        log::trace!("Got dispatch event #{}: {}", msg.seq.as_ref().unwrap(), msg.event.as_ref().unwrap());
+                        log::trace!(
+                            "Got dispatch event #{}: {}",
+                            msg.seq.as_ref().unwrap(),
+                            msg.event.as_ref().unwrap()
+                        );
                         seq = max(seq, msg.seq);
                         dispatch_queue.push_back(msg)
-                    },
+                    }
                     1 => {
                         log::trace!("Gateway asked for heartbeat");
                         ws.heartbeat().await?;
@@ -107,7 +116,11 @@ impl<F, Model> Client<F, Model> where
                         log::trace!("Gateway asked for reconnect");
                         let ctx = self.ctx.lock().await;
                         let seq = ws.sequence;
-                        *ws = Websocket::new_with(&(ctx.resume_info.as_ref().unwrap().url), seq.unwrap()).await?;
+                        *ws = Websocket::new_with(
+                            &(ctx.resume_info.as_ref().unwrap().url),
+                            seq.unwrap(),
+                        )
+                        .await?;
                         ws.token(ctx.auth.as_ref().unwrap().clone());
                         ws.resume(ctx.resume_info.as_ref().unwrap()).await?;
                     }
@@ -130,7 +143,8 @@ impl<F, Model> Client<F, Model> where
 
                     if event.as_str() == "READY" {
                         // this clone is DISGUSTING
-                        let mut ready: Ready = serde_json::from_value(msg.data.clone()).expect("Couldn't parse READY");
+                        let mut ready: Ready =
+                            serde_json::from_value(msg.data.clone()).expect("Couldn't parse READY");
 
                         let mut ctx = self.ctx.lock().await;
                         ctx.user = Some(ready.user);
@@ -145,7 +159,8 @@ impl<F, Model> Client<F, Model> where
                         log::trace!("Context after READY: {ctx:?}");
                     }
 
-                    (self.handler)(self.ctx.clone(), self.ws.clone(), self.model.clone(), msg).await;
+                    (self.handler)(self.ctx.clone(), self.ws.clone(), self.model.clone(), msg)
+                        .await;
                 }
             }
 
@@ -154,7 +169,3 @@ impl<F, Model> Client<F, Model> where
         }
     }
 }
-
-
-
-

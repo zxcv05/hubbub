@@ -1,10 +1,10 @@
+use crate::context::{Context, Response};
+use crate::error::Error;
+use crate::types::timestamp::Timestamp;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use tokio::sync::MutexGuard;
-use crate::context::{Context, Response};
-use crate::error::Error;
-use crate::types::timestamp::Timestamp;
 
 use super::{user::User, Snowflake};
 
@@ -26,13 +26,12 @@ pub enum ChannelType {
     Media = 16,
 }
 
-
 #[derive(Deserialize_repr, Serialize_repr, Debug)]
 #[repr(u16)]
 pub enum ChannelFlag {
     Pinned = 1 << 1,
     RequireTag = 1 << 4,
-    HideDownloadOptions = 1 << 15
+    HideDownloadOptions = 1 << 15,
 }
 
 #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
@@ -60,12 +59,11 @@ pub struct ThreadMetadata {
 pub struct ThreadMember {
     pub id: Option<Snowflake>,
     pub user_id: Option<Snowflake>,
-    
+
     pub join_timestamp: Timestamp,
     pub flags: u64, // notifications
-    // pub member: Option<GuildMember>,
+                    // pub member: Option<GuildMember>,
 }
-
 
 #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
@@ -78,12 +76,14 @@ pub enum OverwriteType {
 pub struct PermissionOverwrite {
     pub id: Snowflake,
     pub allow: String, // TODO serialize into u128
-    pub deny: String, // TODO serialize into u128
+    pub deny: String,  // TODO serialize into u128
     #[serde(rename = "type")]
     pub overwrite_type: u8,
 }
 
-fn default_spam_value() -> bool { false }
+fn default_spam_value() -> bool {
+    false
+}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Channel {
@@ -119,7 +119,7 @@ pub struct Channel {
 
     // Thread
     pub message_count: Option<u64>, // doesnt count first msg
-    pub member_count: Option<u64>, // stops counting at 50
+    pub member_count: Option<u64>,  // stops counting at 50
     pub thread_metadata: Option<ThreadMetadata>,
     pub member: Option<ThreadMember>, // only certain apis include this
 
@@ -129,15 +129,15 @@ pub struct Channel {
 
     pub last_message_id: Option<String>,
     pub last_pin_timestamp: Option<Timestamp>,
-    
+
     #[serde(rename = "safety_warnings")]
     pub warnings: Option<Vec<String>>,
-    
+
     #[serde(default = "default_spam_value")]
     pub is_spam: bool,
 
     pub permission_overwrites: Option<Vec<PermissionOverwrite>>,
-    
+
     #[serde(rename = "type")]
     pub channel_type: ChannelType,
     pub flags: u64,
@@ -145,24 +145,21 @@ pub struct Channel {
 
 impl Channel {
     pub fn is_dm(&self) -> bool {
-        self.channel_type == ChannelType::DM ||
-            self.channel_type == ChannelType::Group
+        self.channel_type == ChannelType::DM || self.channel_type == ChannelType::Group
     }
 
     pub fn is_thread(&self) -> bool {
-        self.channel_type == ChannelType::ThreadAnnouncement ||
-            self.channel_type == ChannelType::ThreadPrivate ||
-            self.channel_type == ChannelType::ThreadPublic
+        self.channel_type == ChannelType::ThreadAnnouncement
+            || self.channel_type == ChannelType::ThreadPrivate
+            || self.channel_type == ChannelType::ThreadPublic
     }
 
     pub fn is_forum(&self) -> bool {
-        self.channel_type == ChannelType::Forum ||
-            self.channel_type == ChannelType::Media
+        self.channel_type == ChannelType::Forum || self.channel_type == ChannelType::Media
     }
 
     pub fn is_voice(&self) -> bool {
-        self.channel_type == ChannelType::Voice ||
-            self.channel_type == ChannelType::VoiceStage
+        self.channel_type == ChannelType::Voice || self.channel_type == ChannelType::VoiceStage
     }
 
     pub fn is_text(&self) -> bool {
@@ -172,66 +169,146 @@ impl Channel {
     pub fn is_category(&self) -> bool {
         self.channel_type == ChannelType::Category
     }
-    
-    /**
-    * Channel
-    */
 
-    pub async fn fetch_channel(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/channels/{}", id), None).await
+    /**
+     * Channel
+     */
+
+    pub async fn fetch_channel(
+        ctx: &mut MutexGuard<'_, Context>,
+        id: Snowflake,
+    ) -> anyhow::Result<Response> {
+        ctx.request(http::Method::GET, &format!("/v9/channels/{}", id), None)
+            .await
     }
 
-    pub async fn delete_channel(self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+    pub async fn delete_channel(
+        self,
+        ctx: &mut MutexGuard<'_, Context>,
+    ) -> anyhow::Result<Response> {
         Self::delete_channel_static(ctx, self.id).await
     }
-    pub async fn delete_channel_static(ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::DELETE, &format!("/v9/channels/{}", id), None).await
+    pub async fn delete_channel_static(
+        ctx: &mut MutexGuard<'_, Context>,
+        id: Snowflake,
+    ) -> anyhow::Result<Response> {
+        ctx.request(http::Method::DELETE, &format!("/v9/channels/{}", id), None)
+            .await
     }
-    
-    /**
-    * Message
-    */
 
-    pub async fn send_message(&self, ctx: &mut MutexGuard<'_, Context>, msg: Value) -> anyhow::Result<Response> {
+    /**
+     * Message
+     */
+
+    pub async fn send_message(
+        &self,
+        ctx: &mut MutexGuard<'_, Context>,
+        msg: Value,
+    ) -> anyhow::Result<Response> {
         Self::send_message_static(ctx, self.id, msg).await
     }
-    pub async fn send_message_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, msg: Value) -> anyhow::Result<Response> {
-        ctx.request(http::Method::POST, &format!("/v9/channels/{}/messages", channel_id), Some(msg)).await
+    pub async fn send_message_static(
+        ctx: &mut MutexGuard<'_, Context>,
+        channel_id: Snowflake,
+        msg: Value,
+    ) -> anyhow::Result<Response> {
+        ctx.request(
+            http::Method::POST,
+            &format!("/v9/channels/{}/messages", channel_id),
+            Some(msg),
+        )
+        .await
     }
 
-    pub async fn fetch_messages(&self, ctx: &mut MutexGuard<'_, Context>, limit: u64, before: Option<Snowflake>) -> anyhow::Result<Response> {
+    pub async fn fetch_messages(
+        &self,
+        ctx: &mut MutexGuard<'_, Context>,
+        limit: u64,
+        before: Option<Snowflake>,
+    ) -> anyhow::Result<Response> {
         Self::fetch_messages_static(ctx, self.id, limit, before).await
     }
-    pub async fn fetch_messages_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, limit: u64, before: Option<Snowflake>) -> anyhow::Result<Response> {
+    pub async fn fetch_messages_static(
+        ctx: &mut MutexGuard<'_, Context>,
+        channel_id: Snowflake,
+        limit: u64,
+        before: Option<Snowflake>,
+    ) -> anyhow::Result<Response> {
         if limit > 100 {
             return Err(Error::InvalidApiRequest("limit must be less than 100".to_string()).into());
         }
-        
+
         let mut endpoint = format!("/v9/channels/{}/messages?limit={}", channel_id, limit);
-        
+
         if let Some(before) = before {
             endpoint.push_str(&format!("&before={}", before));
         }
-        
+
         ctx.request(http::Method::GET, &endpoint, None).await
     }
-    
-    pub async fn fetch_message(&self, ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+
+    pub async fn fetch_message(
+        &self,
+        ctx: &mut MutexGuard<'_, Context>,
+        id: Snowflake,
+    ) -> anyhow::Result<Response> {
         Self::fetch_message_static(ctx, self.id, id).await
     }
-    pub async fn fetch_message_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/channels/{}/messages/{}", channel_id, id), None).await
+    pub async fn fetch_message_static(
+        ctx: &mut MutexGuard<'_, Context>,
+        channel_id: Snowflake,
+        id: Snowflake,
+    ) -> anyhow::Result<Response> {
+        ctx.request(
+            http::Method::GET,
+            &format!("/v9/channels/{}/messages/{}", channel_id, id),
+            None,
+        )
+        .await
     }
-    
-    pub async fn delete_message(self, ctx: &mut MutexGuard<'_, Context>, id: Snowflake) -> anyhow::Result<Response> {
+
+    pub async fn delete_message(
+        self,
+        ctx: &mut MutexGuard<'_, Context>,
+        id: Snowflake,
+    ) -> anyhow::Result<Response> {
         Self::delete_message_static(ctx, self.id, id).await
     }
+    pub async fn delete_message_static(
+        ctx: &mut MutexGuard<'_, Context>,
+        channel_id: Snowflake,
+        id: Snowflake,
+    ) -> anyhow::Result<Response> {
+        ctx.request(
+            http::Method::DELETE,
+            &format!("/v9/channels/{}/messages/{}", channel_id, id),
+            None,
+        )
+        .await
+    }
     
-    pub async fn delete_message_static(ctx: &mut MutexGuard<'_, Context>, channel_id: Snowflake, id: Snowflake) -> anyhow::Result<Response> {
-        ctx.request(http::Method::DELETE, &format!("/v9/channels/{}/messages/{}", channel_id, id), None).await
+    pub async fn edit_message(
+        self,
+        ctx: &mut MutexGuard<'_, Context>,
+        id: Snowflake,
+        msg: Value
+    ) -> anyhow::Result<Response> {
+        Self::edit_message_static(ctx, self.id, id, msg).await
+    }
+    pub async fn edit_message_static(
+        ctx: &mut MutexGuard<'_, Context>,
+        channel_id: Snowflake,
+        id: Snowflake,
+        msg: Value
+    ) -> anyhow::Result<Response> {
+        ctx.request(
+            http::Method::PATCH,
+            &format!("/v9/channels/{}/messages/{}", channel_id, id),
+            Some(msg)
+        )
+        .await
     }
 }
-
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ChannelMention {
@@ -244,7 +321,6 @@ pub struct ChannelMention {
     pub channel_type: ChannelType,
 }
 
-
 pub mod welcome_screen {
     use serde::{Deserialize, Serialize};
 
@@ -256,17 +332,16 @@ pub mod welcome_screen {
         #[serde(rename = "welcome_channels")]
         pub channels: Vec<WelcomeChannel>,
     }
-    
+
     #[derive(Deserialize, Serialize, Debug)]
     pub struct WelcomeChannel {
         pub channel_id: Snowflake,
         pub description: String,
-    
+
         pub emoji_id: Option<Snowflake>,
         pub emoji_name: Option<String>,
     }
 }
-
 
 pub mod stage_instance {
     use serde::{Deserialize, Serialize};
@@ -280,7 +355,6 @@ pub mod stage_instance {
         Public = 1,
         GuildOnly = 2,
     }
-
 
     #[derive(Deserialize, Serialize, Debug)]
     pub struct StageInstance {
@@ -335,7 +409,7 @@ impl ChannelBuilder {
     pub fn add_permission_overwrite(&mut self, overwrite: Value) {
         let permission_overwrites = match self.value["permission_overwrites"].as_array_mut() {
             Some(v) => v,
-            None => &mut Vec::new()
+            None => &mut Vec::new(),
         };
 
         permission_overwrites.push(overwrite);

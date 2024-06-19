@@ -3,7 +3,6 @@ use serde_json::{json, Value};
 
 use super::Snowflake;
 
-
 /**
  * This is stupid
  * So, fields of type Option<()> "represent booleans":
@@ -59,7 +58,7 @@ pub struct Role {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RoleBuilder {
-    value: Value
+    value: Value,
 }
 
 impl RoleBuilder {
@@ -68,33 +67,32 @@ impl RoleBuilder {
             value: json!({
                 "name": name,
                 "permissions": permissions
-            })
+            }),
         }
     }
-    
+
     pub fn set_color(&mut self, color: u64) {
         self.value["color"] = json!(color);
     }
-    
+
     pub fn set_hoist(&mut self, hoist: bool) {
         self.value["hoist"] = json!(hoist);
     }
-    
+
     // icon is data:image/jpeg;base64,..
     pub fn set_icon(&mut self, icon: String) {
         self.value["icon"] = json!(icon);
     }
-    
+
     pub fn set_emoji(&mut self, emoji: String) {
         self.value["unicode_emoji"] = json!(emoji);
     }
-    
+
     pub fn set_mentionable(&mut self, mentionable: bool) {
         self.value["mentionable"] = json!(mentionable);
     }
-    
+
     pub fn build(self) -> Value {
         self.value
     }
 }
-

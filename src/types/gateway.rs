@@ -1,7 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use super::{channel::Channel, guild::CachedGuild, user::{BotUser, Relationship, User}};
-
+use super::{
+    channel::Channel,
+    guild::CachedGuild,
+    user::{BotUser, Relationship, User},
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Ready {

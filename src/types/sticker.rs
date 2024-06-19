@@ -3,7 +3,6 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use super::{user::User, Snowflake};
 
-
 #[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum StickerType {
@@ -44,7 +43,7 @@ pub struct Sticker {
 
     #[serde(rename = "user")]
     pub creator: Option<User>,
-    
+
     pub available: Option<bool>,
     pub sort_value: Option<u64>,
 }

@@ -1,19 +1,18 @@
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
 use crate::types::channel::Channel;
 use crate::types::guild::GuildMember;
 use crate::types::message::{Attachment, Message};
 use crate::types::role::Role;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use super::{user::User, Snowflake};
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Emoji {
     pub id: Option<Snowflake>,
     pub name: Option<String>, // null in reaction emojis objects
-    pub roles: Vec<String>, // role ids (i think?)
-    
+    pub roles: Vec<String>,   // role ids (i think?)
+
     #[serde(rename = "user")]
     pub creator: Option<User>,
 
@@ -32,4 +31,3 @@ pub struct Resolved {
     pub messages: Option<HashMap<Snowflake, Message>>,
     pub attachments: Option<HashMap<Snowflake, Attachment>>,
 }
-
