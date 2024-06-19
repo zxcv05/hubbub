@@ -7,7 +7,7 @@ use super::common::Emoji;
 #[derive(Serialize_repr, Deserialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum ActivityType {
-    Game = 0,      // Playing {name}
+    Playing = 0,      // Playing {name}
     Steaming = 1,  // Streaming {details}
     Listening = 2, // Listening to {name}
     Watching = 3,  // Watching {name}

@@ -286,7 +286,7 @@ impl Channel {
         )
         .await
     }
-    
+
     pub async fn edit_message(
         self,
         ctx: &mut MutexGuard<'_, Context>,
@@ -305,6 +305,28 @@ impl Channel {
             http::Method::PATCH,
             &format!("/v9/channels/{}/messages/{}", channel_id, id),
             Some(msg)
+        )
+        .await
+    }
+
+    pub async fn add_reaction(
+        self,
+        ctx: &mut MutexGuard<'_, Context>,
+        id: Snowflake,
+        emoji: &str
+    ) -> anyhow::Result<Response> {
+        Self::add_reaction_static(ctx, self.id, id, emoji).await
+    }
+    pub async fn add_reaction_static(
+        ctx: &mut MutexGuard<'_, Context>,
+        channel_id: Snowflake,
+        id: Snowflake,
+        emoji: &str
+    ) -> anyhow::Result<Response> {
+        ctx.request(
+            http::Method::PUT,
+            &format!("/v9/channels/{}/messages/{}/reactions/{}/@me", channel_id, id, emoji),
+            None
         )
         .await
     }
