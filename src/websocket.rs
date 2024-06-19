@@ -4,8 +4,9 @@ use anyhow::Result;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use reqwest_websocket::{websocket, Message, WebSocket as WS};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value as JSON};
+use serde_json::{json, Value as JSON, Value};
 use std::{collections::VecDeque, sync::Arc, time::Duration};
+use log::error;
 use tokio::sync::Mutex;
 
 static DISCORD_WS_URI: &str = "wss://gateway.discord.gg/?encoding=json&v=9";
@@ -54,7 +55,11 @@ impl StreamCtrl {
                     Err(e) => {
                         let mut rxq = rxq.lock().await;
                         rxq.close().await.expect("Couldn't close sink");
-                        panic!("{e:?}");
+                        rxq.push_back(Message::Text(
+                            json!({ "op": 7 }).to_string()
+                        ));
+                        error!("{e:?}");
+                        return;
                     }
                 };
 
@@ -89,7 +94,8 @@ impl StreamCtrl {
 
                 if let Err(e) = tx.flush().await {
                     txq.close().await.expect("Couldn't close stream");
-                    panic!("{e:?}");
+                    error!("{e:?}");
+                    return;
                 }
 
                 drop(txq);
