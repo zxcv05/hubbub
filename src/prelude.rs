@@ -3,7 +3,7 @@ pub use crate::{
     error::Error,
     types::*,
     websocket::{DiscordMessage, Websocket},
-    Client,
+    client::Client,
 };
 
 pub use anyhow::Result;
