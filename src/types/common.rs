@@ -7,11 +7,11 @@ use std::collections::HashMap;
 
 use super::{user::User, Snowflake};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Emoji {
     pub id: Option<Snowflake>,
     pub name: Option<String>, // null in reaction emojis objects
-    pub roles: Vec<String>,   // role ids (i think?)
+    pub roles: Option<Vec<Snowflake>>,
 
     #[serde(rename = "user")]
     pub creator: Option<User>,
@@ -22,7 +22,7 @@ pub struct Emoji {
     pub available: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Resolved {
     pub users: Option<HashMap<Snowflake, User>>,
     pub members: Option<HashMap<Snowflake, GuildMember>>,

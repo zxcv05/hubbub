@@ -8,9 +8,9 @@ pub mod poll;
 pub mod presence;
 pub mod role;
 pub mod sticker;
+pub mod timestamp;
 pub mod user;
 
 mod snowflake;
-mod timestamp;
 
 pub use snowflake::Snowflake;

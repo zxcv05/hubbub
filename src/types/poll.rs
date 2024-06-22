@@ -3,19 +3,19 @@ use crate::types::timestamp::Timestamp;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Media {
     pub text: Option<String>,
     pub emoji: Option<Emoji>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Answer {
     pub answer_id: Option<u64>, // dont ever send
     pub poll_media: Media,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AnswerCount {
     pub id: u64,
     pub count: u64,
@@ -28,13 +28,13 @@ pub enum LayoutType {
     Default = 1,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Results {
     pub is_finalized: bool,
     pub answer_counts: Vec<AnswerCount>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Poll {
     pub question: Media,
     pub answers: Vec<Answer>,

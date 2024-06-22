@@ -41,7 +41,7 @@ pub enum VideoQualityMode {
     Full = 2, // 720p
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ThreadMetadata {
     pub archived: bool,
     pub auto_archive_duration: u64, // in minutes
@@ -55,7 +55,7 @@ pub struct ThreadMetadata {
     pub invitable: Option<bool>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ThreadMember {
     pub id: Option<Snowflake>,
     pub user_id: Option<Snowflake>,
@@ -72,7 +72,7 @@ pub enum OverwriteType {
     Member = 1,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct PermissionOverwrite {
     pub id: Snowflake,
     pub allow: String, // TODO serialize into u128
@@ -85,7 +85,7 @@ fn default_spam_value() -> bool {
     false
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Channel {
     pub id: Snowflake,
     pub name: Option<String>,
@@ -332,7 +332,7 @@ impl Channel {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ChannelMention {
     pub id: Snowflake,
     pub guild_id: Snowflake,
@@ -348,14 +348,14 @@ pub mod welcome_screen {
 
     use crate::types::Snowflake;
 
-    #[derive(Deserialize, Serialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct WelcomeScreen {
         pub description: Option<String>,
         #[serde(rename = "welcome_channels")]
         pub channels: Vec<WelcomeChannel>,
     }
 
-    #[derive(Deserialize, Serialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct WelcomeChannel {
         pub channel_id: Snowflake,
         pub description: String,
@@ -378,7 +378,7 @@ pub mod stage_instance {
         GuildOnly = 2,
     }
 
-    #[derive(Deserialize, Serialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct StageInstance {
         pub id: Snowflake,
         pub guild_id: Snowflake,
@@ -389,7 +389,7 @@ pub mod stage_instance {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ChannelBuilder {
     value: Value,
 }

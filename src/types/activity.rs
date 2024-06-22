@@ -12,22 +12,23 @@ pub enum ActivityType {
     Listening = 2, // Listening to {name}
     Watching = 3,  // Watching {name}
     Custom = 4,    // {emoji} {state}
-    Competing = 5, // Competing in {name}
+    Competing
+    = 5, // Competing in {name}
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Timestamps {
     pub start: Option<u64>, // ms
     pub end: Option<u64>,   // ms
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Party {
     pub id: Option<String>,
     pub size: Option<[u64; 2]>, // [current_size, max_size],
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Asset {
     pub large_image: Option<String>,
     pub large_text: Option<String>,
@@ -35,7 +36,7 @@ pub struct Asset {
     pub small_text: Option<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Secrets {
     #[serde(rename = "join")]
     pub join_key: Option<String>,
@@ -59,13 +60,13 @@ pub enum ActivityFlag {
     Embedded = 1 << 8,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Button {
     pub label: String, // 1-32 limit
     pub url: String,   // 1-512 limit
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Activity {
     pub name: String,
     #[serde(rename = "type")]
@@ -85,7 +86,7 @@ pub struct Activity {
     pub flags: u16,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ActivityBuilder {
     value: Value,
 }
@@ -100,41 +101,48 @@ impl ActivityBuilder {
         }
     }
 
-    pub fn set_url(&mut self, url: String) {
+    pub fn set_url(mut self, url: String) -> Self {
         if url.len() > 512 {
             panic!("URL must be less than 512 characters");
         }
         self.value["url"] = json!(url);
+        self
     }
 
-    pub fn set_timestamps(&mut self, start: u64, end: u64) {
+    pub fn set_timestamps(mut self, start: u64, end: u64) -> Self {
         self.value["timestamps"] = json!({
             "start": start,
             "end": end
         });
+        self
     }
 
-    pub fn set_application_id(&mut self, application_id: u64) {
+    pub fn set_application_id(mut self, application_id: u64) -> Self {
         self.value["application_id"] = json!(application_id);
+        self
     }
 
-    pub fn set_emoji(&mut self, emoji: Emoji) {
+    pub fn set_emoji(mut self, emoji: Emoji) -> Self {
         self.value["emoji"] = json!(emoji);
+        self
     }
 
-    pub fn set_asset(&mut self, assets: Asset) {
+    pub fn set_asset(mut self, assets: Asset) -> Self {
         self.value["assets"] = json!(assets);
+        self
     }
 
-    pub fn set_flags(&mut self, flags: u16) {
+    pub fn set_flags(mut self, flags: u16) -> Self {
         self.value["flags"] = json!(flags);
+        self
     }
 
-    pub fn set_state(&mut self, state: String) {
+    pub fn set_state(mut self, state: String) -> Self {
         self.value["state"] = json!(state);
+        self
     }
 
-    pub fn add_button(&mut self, label: String, url: String) {
+    pub fn add_button(mut self, label: String, url: String) -> Self {
         let buttons = match self.value["buttons"].as_array_mut() {
             Some(v) => v,
             None => &mut Vec::new(),
@@ -157,6 +165,7 @@ impl ActivityBuilder {
             "url": url
         }));
         self.value["buttons"] = json!(buttons);
+        self
     }
 
     pub fn build(self) -> Value {

@@ -4,14 +4,14 @@ use anyhow::Result;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use reqwest_websocket::{websocket, Message, WebSocket as WS};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value as JSON, Value};
+use serde_json::{json, Value as JSON};
 use std::{collections::VecDeque, sync::Arc, time::Duration};
 use log::error;
 use tokio::sync::Mutex;
 
 static DISCORD_WS_URI: &str = "wss://gateway.discord.gg/?encoding=json&v=9";
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DiscordMessage {
     pub op: u8,
 

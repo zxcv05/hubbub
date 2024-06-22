@@ -3,13 +3,13 @@ use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use super::Snowflake;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct AvatarDecorationData {
     pub asset: String,
     pub sku_id: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UserClan {
     #[serde(rename = "identity_enabled")]
     pub shown: bool,
@@ -25,7 +25,7 @@ pub enum RelationshipType {
     Bot = 2,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Relationship {
     pub id: String,
     pub nickname: Option<String>,
@@ -65,7 +65,7 @@ pub enum UserFlags {
 fn default_bot_value() -> bool {
     false
 }
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct User {
     pub id: Snowflake,
     pub username: String,
@@ -97,7 +97,7 @@ pub struct User {
     pub premium_type: Option<PremiumType>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct BotUser {
     pub id: Snowflake,
     pub username: String,

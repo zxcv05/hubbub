@@ -67,7 +67,7 @@ pub enum SystemChannelFlags {
     SuppressRoleSubPurchaseReplies = 1 << 5,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Guild {
     pub id: Snowflake,
     pub name: String,
@@ -606,7 +606,7 @@ impl Guild {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CachedGuild {
     pub id: Snowflake,
     pub joined_at: Timestamp,
@@ -658,7 +658,7 @@ pub enum GuildMemberFlags {
     StartedOnboarding = 1 << 3,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct GuildMember {
     pub user: Option<User>,
     pub nick: Option<String>,
@@ -668,14 +668,14 @@ pub struct GuildMember {
     pub premium_since: Option<Timestamp>,
     pub deaf: bool,
     pub mute: bool,
-    pub flags: GuildMemberFlags,
+    pub flags: u8,
     pub pending: bool,
     pub permissions: String,
     pub communication_disabled_until: Option<Timestamp>,
     pub avatar_decoration_data: Option<AvatarDecorationData>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct GuildMemberEditBuilder {
     value: Value,
 }

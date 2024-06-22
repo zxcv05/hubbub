@@ -6,7 +6,7 @@ use super::{
     user::{BotUser, Relationship, User},
 };
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Ready {
     pub private_channels: Vec<Channel>,
 

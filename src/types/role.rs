@@ -9,7 +9,7 @@ use super::Snowflake;
  * if it exists, it's true. otherwise false
  * use .is_some()
  */
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RoleTag {
     bot_id: Option<Snowflake>,
     integration_id: Option<Snowflake>,
@@ -20,7 +20,7 @@ pub struct RoleTag {
     guild_connections: Option<()>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RoleSubscriptionData {
     pub role_subscription_listing_id: Snowflake,
     pub tier_name: String,
@@ -34,7 +34,7 @@ pub enum RoleFlags {
     InPrompt = 1 << 0,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Role {
     pub id: Snowflake,
     pub name: String,
@@ -56,7 +56,7 @@ pub struct Role {
     pub emoji: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RoleBuilder {
     value: Value,
 }

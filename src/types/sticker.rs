@@ -19,14 +19,14 @@ pub enum StickerFormat {
     GIF = 4,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StickerItem {
     pub id: Snowflake,
     pub name: String,
     pub format_type: StickerFormat,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Sticker {
     pub id: Snowflake,
     pub pack_id: Option<Snowflake>,
@@ -48,7 +48,7 @@ pub struct Sticker {
     pub sort_value: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct StickerPack {
     pub id: Snowflake,
     pub name: String,

@@ -20,7 +20,7 @@ pub enum AttachmentFlags {
     IsRemix = 1 << 2,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Attachment {
     pub id: Snowflake,
 
@@ -46,13 +46,13 @@ pub struct Attachment {
     pub flags: Option<u8>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ReactionCountDetails {
     pub burst: usize,
     pub normal: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Reaction {
     pub count: usize,
     pub count_details: ReactionCountDetails,
@@ -126,13 +126,13 @@ pub enum ActivityType {
     JoinRequest = 5,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Activity {
     pub message_activity_type: ActivityType,
     pub party_id: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Reference {
     pub message_id: Option<Snowflake>,
     pub channel_id: Option<Snowflake>,
@@ -166,7 +166,7 @@ pub enum InteractionType {
     ModalSubmit = 5,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct InteractionMetadata {
     pub id: Snowflake,
     #[serde(rename = "type")]
@@ -178,13 +178,13 @@ pub struct InteractionMetadata {
     pub triggering_interaction_metadata: Option<Box<InteractionMetadata>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Call {
     pub participants: Vec<Snowflake>,
     pub ended_timestamp: Option<Timestamp>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Message {
     pub id: Snowflake,
     pub channel_id: Snowflake,
@@ -247,7 +247,7 @@ pub mod embed {
     use crate::types::timestamp::Timestamp;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Footer {
         pub text: String, // 2048 chars
 
@@ -276,7 +276,7 @@ pub mod embed {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Image {
         pub url: String,
         pub proxy_url: Option<String>,
@@ -285,7 +285,7 @@ pub mod embed {
         pub height: Option<usize>,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Thumbnail {
         pub url: String,
         pub proxy_url: Option<String>,
@@ -294,7 +294,7 @@ pub mod embed {
         pub height: Option<usize>,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Video {
         pub url: Option<String>,
         pub proxy_url: Option<String>,
@@ -303,7 +303,7 @@ pub mod embed {
         pub height: Option<usize>,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Provider {
         pub name: Option<String>,
         pub url: Option<String>,
@@ -323,7 +323,7 @@ pub mod embed {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Author {
         pub name: String, // 256 chars
         pub url: Option<String>,
@@ -359,7 +359,7 @@ pub mod embed {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Field {
         pub name: String,  // 256 chars
         pub value: String, // 1024 chars
@@ -382,7 +382,7 @@ pub mod embed {
     }
 
     // Max length of all text cannot exceed 6000 chars
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Embed {
         pub title: Option<String>, // 256 chars
 
@@ -425,7 +425,7 @@ pub mod component {
         ChannelSelect = 8,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct ActionRow {
         #[serde(rename = "type")]
         _type: ComponentType,
@@ -463,7 +463,7 @@ pub mod component {
         Link = 5,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct Button {
         #[serde(rename = "type")]
         _type: ComponentType,
@@ -509,7 +509,7 @@ pub mod component {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct SelectOption {
         pub label: String,
         pub value: String,
@@ -518,7 +518,7 @@ pub mod component {
         pub default: Option<bool>,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     #[serde(rename_all = "lowercase")]
     pub enum DefaultValueType {
         User,
@@ -526,14 +526,14 @@ pub mod component {
         Channel,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct DefaultValue {
         pub id: Snowflake,
         #[serde(rename = "type")]
         pub value_type: DefaultValueType,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct SelectMenu {
         #[serde(rename = "type")]
         _type: ComponentType,
@@ -660,7 +660,7 @@ pub mod component {
         Paragraph = 2,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
     pub struct TextInput {
         #[serde(rename = "type")]
         _type: ComponentType,
@@ -719,7 +719,8 @@ pub mod component {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Deserialize, Serialize, Debug, Clone)]
+    #[serde(untagged)]
     pub enum Component {
         ActionRow(ActionRow),
         Button(Box<Button>),
