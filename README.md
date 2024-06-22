@@ -4,10 +4,11 @@ Rust library for creating discord self-bots (very early in development)
 ## Current features
 - Allows passing a model
 - Connects to gateway with token
-- Supports reconnecting to gateway (untested, should work)
-- Supports making calls to discords http api
+- Supports reconnecting to gateway (semi tested, should work)
+- Supports making calls to discords http api (any version)
 - Supports sending and receiving gateway events
-- *Some* of discord's many, MANY, data structures have been translated into serde-compatible structs
+- *Most* of discord's many, MANY, data structures have been translated into serde-compatible structs
+- Major structs have convenience functions for doing common tasks (eg: creating a message)
 
 ## Using the library
 1. Add the library to your project using `cargo add hubbub`
