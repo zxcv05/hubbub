@@ -21,8 +21,10 @@ pub struct UserClan {
 #[derive(Deserialize_repr, Serialize_repr, Debug, Eq, PartialEq, Clone)]
 #[repr(u8)]
 pub enum RelationshipType {
-    User = 1,
+    Friend = 1,
     Bot = 2,
+    IncomingFriendRequest = 3,
+    OutgoingFriendRequest = 4,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
