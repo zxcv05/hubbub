@@ -23,7 +23,10 @@ struct App {
 ```rust
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let mut client = Client::new(App { }, /* Event handler */).await?;
+    let mut client = Client::new(
+        App { /* ... */ },
+        /* Event handler */
+    ).await?;
 
     client.token(/* Token */).await?;
     client.login().await?;
@@ -32,11 +35,18 @@ async fn main() -> anyhow::Result<()> {
 ```
 5. Create the event handler
 ```rust
+async fn main() {
+    // ...
+    
+    /* Event handler */
     Box::from(
         |ctx: Ctx, ws: Ws, model: Model<App>, msg: DiscordMessage| async move {
             /* do work here */
         }
     )
+    
+    // ...
+}
 ```
 6. Success, hopefully!
 
