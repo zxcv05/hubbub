@@ -4,7 +4,7 @@ use anyhow::Result;
 use crate::context::{Context, ResumeInfo};
 use crate::error::Error;
 use std::{cmp::max, collections::VecDeque, sync::Arc, time::Duration};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, MutexGuard};
 use crate::types::gateway::Ready;
 use crate::websocket::{DiscordMessage, Websocket};
 pub type Handler<F, M> = dyn Fn(Ctx, Ws, Model<M>, DiscordMessage) -> F;
@@ -23,7 +23,7 @@ where
 impl<F, Model> Client<F, Model>
 where
     F: Future + Send + 'static,
-    F::Output: Send + 'static,
+    F::Output: Send + 'static, Model: Send
 {
     pub async fn new(model: Model, handler: Box<Handler<F, Model>>) -> Result<Self> {
         Ok(Self {
@@ -80,7 +80,7 @@ where
         drop(ws);
 
         let mut dispatch_queue: VecDeque<DiscordMessage> = VecDeque::with_capacity(8);
-        loop {
+        'main: loop {
             let mut ws = match self.ws.try_lock() {
                 Ok(ws) => ws,
                 Err(_) => {
@@ -102,23 +102,38 @@ where
                         dispatch_queue.push_back(msg)
                     }
                     1 => {
-                        log::trace!("Gateway asked for heartbeat");
+                        log::debug!("Gateway asked for heartbeat");
                         ws.heartbeat().await?;
                     }
                     7 => {
-                        log::trace!("Gateway asked for reconnect");
-                        let ctx = self.ctx.lock().await;
-                        let seq = ws.sequence;
-                        *ws = Websocket::new_with(
-                            &(ctx.resume_info.as_ref().unwrap().url),
-                            seq.unwrap(),
-                        )
-                            .await?;
-                        ws.token(ctx.auth.as_ref().unwrap().clone());
-                        ws.resume(ctx.resume_info.as_ref().unwrap()).await?;
+                        log::debug!("Gateway asked for reconnect");
+                        drop(ws);
+                        self.resume().await?;
+                        continue 'main;
+                    }
+                    9 => { // Invalid session
+                        log::debug!("Gateway sent 'Invalid session'");
+
+                        if msg.data.as_bool().unwrap() {
+                            log::debug!("Trying to resume");
+                            drop(ws);
+                            self.resume().await?;
+                            continue 'main;
+                        } else {
+                            log::debug!("Reconnecting");
+                            drop(ws);
+                            self.login().await?;
+                            continue 'main;
+                        }
                     }
                     11 => {
                         log::trace!("Gateway acknowledged heartbeat");
+                    }
+                    255 => {
+                        log::debug!("Websocket disconnected... trying to resume");
+                        drop(ws);
+                        self.resume().await?;
+                        continue 'main;
                     }
                     _ => (),
                 }
@@ -152,8 +167,12 @@ where
                         log::trace!("Context after READY: {ctx:?}");
                     }
 
-                    (self.handler)(self.ctx.clone(), self.ws.clone(), self.model.clone(), msg)
-                        .await;
+                    let ctx = self.ctx.clone();
+                    let ws = self.ws.clone();
+                    let model = self.model.clone();
+
+                    (self.handler)(ctx, ws, model, msg).await;
+                    // tokio::task::spawn(async move { (self.handler)(ctx, ws, model, msg).await });
                 }
             }
 
@@ -162,3 +181,27 @@ where
         }
     }
 }
+
+
+impl<F, Model> Client<F, Model>
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static, Model: Send {
+    pub async fn resume<'a>(&mut self) -> Result<()> {
+        let mut ws = self.ws.lock().await;
+        let ctx = self.ctx.lock().await;
+
+        let seq = ws.sequence;
+        *ws = Websocket::new_with(
+            &(ctx.resume_info.as_ref().unwrap().url),
+            seq.unwrap(),
+        ).await?;
+
+        ws.token(ctx.auth.as_ref().unwrap().clone());
+        ws.resume(ctx.resume_info.as_ref().unwrap()).await?;
+
+        Ok(())
+    }
+}
+
+

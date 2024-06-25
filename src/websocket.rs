@@ -2,10 +2,11 @@ use crate::{context::ResumeInfo, error::Error};
 
 use anyhow::Result;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
-use reqwest_websocket::{websocket, Message, WebSocket as WS};
+use reqwest_websocket::{websocket, Message, WebSocket as WS, WebSocket};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value as JSON};
 use std::{collections::VecDeque, sync::Arc, time::Duration};
+use futures_util::stream::select_with_strategy;
 use log::error;
 use tokio::sync::Mutex;
 
@@ -55,9 +56,7 @@ impl StreamCtrl {
                     Err(e) => {
                         let mut rxq = rxq.lock().await;
                         rxq.close().await.expect("Couldn't close sink");
-                        rxq.push_back(Message::Text(
-                            json!({ "op": 7 }).to_string()
-                        ));
+                        rxq.push_back(Message::Text(String::from(r#"{"op":255}"#)));
                         error!("{e:?}");
                         return;
                     }
@@ -123,8 +122,26 @@ pub struct Websocket {
 }
 
 impl Websocket {
+    async fn connect(url: String) -> Result<WS> {
+        Ok(loop {
+            log::debug!("Trying websocket connection");
+            let attempt = websocket(url.clone()).await;
+
+            match attempt {
+                Ok(v) => { break v },
+                Err(e) => {
+                    log::error!("Got error while trying to connect: {e}");
+                    log::info!("Retrying in 5s");
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                }
+            }
+        })
+    }
+
     pub async fn new() -> Result<Self> {
-        let (tx, rx) = StreamCtrl::new(websocket(DISCORD_WS_URI).await?)
+        let ws = Self::connect(String::from(DISCORD_WS_URI)).await?;
+
+        let (tx, rx) = StreamCtrl::new(ws)
             .start()
             .await;
 
@@ -138,8 +155,10 @@ impl Websocket {
     }
 
     pub async fn new_with(resume_gateway: &String, sequence: u64) -> Result<Self> {
+        let ws = Self::connect(format!("{}?encoding=json&v=9", resume_gateway)).await?;
+
         let (tx, rx) =
-            StreamCtrl::new(websocket(format!("{}?encoding=json&v=9", resume_gateway)).await?)
+            StreamCtrl::new(ws)
                 .start()
                 .await;
 
