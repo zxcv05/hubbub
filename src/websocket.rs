@@ -2,11 +2,10 @@ use crate::{context::ResumeInfo, error::Error};
 
 use anyhow::Result;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
-use reqwest_websocket::{websocket, Message, WebSocket as WS, WebSocket};
+use reqwest_websocket::{websocket, Message, WebSocket as WS};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value as JSON};
 use std::{collections::VecDeque, sync::Arc, time::Duration};
-use futures_util::stream::select_with_strategy;
 use log::error;
 use tokio::sync::Mutex;
 

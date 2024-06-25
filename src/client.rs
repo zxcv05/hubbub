@@ -4,7 +4,7 @@ use anyhow::Result;
 use crate::context::{Context, ResumeInfo};
 use crate::error::Error;
 use std::{cmp::max, collections::VecDeque, sync::Arc, time::Duration};
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::Mutex;
 use crate::types::gateway::Ready;
 use crate::websocket::{DiscordMessage, Websocket};
 pub type Handler<F, M> = dyn Fn(Ctx, Ws, Model<M>, DiscordMessage) -> F;
