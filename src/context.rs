@@ -58,6 +58,7 @@ impl Default for Context {
 #[derive(Debug)]
 pub struct Response {
     pub status: StatusCode,
+    pub headers: HeaderMap<HeaderValue>,
     pub body: JSON,
 }
 
@@ -94,12 +95,15 @@ impl Context {
         let res = self.client.execute(builder.build()?).await?;
 
         let status = res.status();
+        let headers = res.headers().clone();
         let text = res.text().await?;
         log::debug!("<< {}", status);
+        log::trace!("{headers:?}");
         log::trace!("{text}");
 
         Ok(Response {
             status,
+            headers,
             body: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null),
         })
     }
