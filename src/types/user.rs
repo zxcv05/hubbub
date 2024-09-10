@@ -111,8 +111,8 @@ pub struct BotUser {
     pub avatar_decoration_data: Option<AvatarDecorationData>,
 
     pub banner: Option<String>,
-    pub banner_color: String,
-    pub accent_color: u64,
+    pub banner_color: Option<String>,
+    pub accent_color: Option<u64>,
 
     pub clan: Option<UserClan>,
 
@@ -134,6 +134,6 @@ pub struct BotUser {
     pub premium_type: u32,
 
     pub purchased_flags: u32,
-    pub public_flags: u64,
+    pub public_flags: Option<u64>,
     pub flags: u64,
 }
