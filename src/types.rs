@@ -11,6 +11,8 @@ pub mod sticker;
 pub mod timestamp;
 pub mod user;
 
+mod vendor;
 mod snowflake;
 
+pub use vendor::*;
 pub use snowflake::Snowflake;
