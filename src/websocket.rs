@@ -1,13 +1,11 @@
-use crate::{context::ResumeInfo, error::Error};
+use crate::{context::ResumeInfo, error::Error, prelude::{Mutex, Arc}};
 
 use anyhow::Result;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use reqwest_websocket::{websocket, Message, WebSocket as WS};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value as JSON};
-use std::{collections::VecDeque, sync::Arc, time::Duration};
-use log::error;
-use tokio::sync::Mutex;
+use std::{collections::VecDeque, time::Duration};
 
 static DISCORD_WS_URI: &str = "wss://gateway.discord.gg/?encoding=json&v=9";
 
@@ -35,8 +33,8 @@ impl StreamCtrl {
     pub fn new(s: WS) -> Self {
         Self {
             s,
-            rx: VecDeque::with_capacity(128),
-            tx: VecDeque::with_capacity(128),
+            rx: VecDeque::with_capacity(64),
+            tx: VecDeque::with_capacity(64),
         }
     }
 
@@ -44,6 +42,9 @@ impl StreamCtrl {
         let _txq = Arc::new(Mutex::new(self.tx));
         let _rxq = Arc::new(Mutex::new(self.rx));
         let (mut tx, mut rx) = self.s.into_stream().split();
+
+        // TODO: I really hate this solution
+        // Two threads, constantly running and taking up resources
 
         let rxq = _rxq.clone();
         tokio::task::spawn(async move {
@@ -56,7 +57,7 @@ impl StreamCtrl {
                         let mut rxq = rxq.lock().await;
                         rxq.close().await.expect("Couldn't close sink");
                         rxq.push_back(Message::Text(String::from(r#"{"op":255}"#)));
-                        error!("{e:?}");
+                        log::error!("{e:?}");
                         return;
                     }
                 };
@@ -92,7 +93,7 @@ impl StreamCtrl {
 
                 if let Err(e) = tx.flush().await {
                     txq.close().await.expect("Couldn't close stream");
-                    error!("{e:?}");
+                    log::error!("{e:?}");
                     return;
                 }
 
