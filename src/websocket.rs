@@ -251,7 +251,7 @@ impl Websocket {
                     "referrer_current": "",
                     "referring_domain_current": "",
                     "release_channel": "stable",
-                    "client_build_number": 301409, // TODO: reliable way to get up-to-date build number
+                    "client_build_number": 327180, // TODO: reliable way to get up-to-date build number
                     "client_event_source": JSON::Null,
                     "design_id": 0
                 },
