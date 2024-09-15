@@ -11,9 +11,7 @@ repository = "https://github.com/zxcv05/hubbub"
 [dependencies]
 anyhow = "1.0.86"
 async-timer = { version = "0.7.4", features = ["tokio"] }
-async-trait = "0.1.80"
 chrono = "0.4.38"
-dyn-clone = "1.0.17"
 futures-util = "0.3.30"
 http = "1.1.0"
 log = "0.4.21"
