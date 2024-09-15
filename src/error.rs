@@ -1,4 +1,4 @@
-use std::{fmt::Display, time::Instant};
+use std::{fmt::Display, time::Duration};
 
 use thiserror::Error;
 
@@ -8,7 +8,7 @@ pub enum Error {
     NoTokenGiven,
     InvalidApiRequest(String),
     InvalidToken(String),
-    Ratelimit(Instant),
+    Ratelimit(Duration),
 }
 
 impl Display for Error {

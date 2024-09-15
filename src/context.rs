@@ -3,6 +3,7 @@ use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use reqwest::Url;
 use serde_json::Value as JSON;
 
+use crate::error::Error;
 use crate::types::{
     guild::CachedGuild,
     user::{BotUser, User},
@@ -101,10 +102,17 @@ impl Context {
         log::trace!("{headers:?}");
         log::trace!("{text}");
 
-        Ok(Response {
-            status,
-            headers,
-            body: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null),
-        })
+        match status.as_u16() {
+            429 => {
+                Err(anyhow::anyhow!(Error::Ratelimit(
+                    std::time::Duration::from_secs(headers.get("Retry-After").unwrap().to_str().unwrap().parse::<u64>().unwrap() + 1)
+                )))
+            },
+            _ => Ok(Response {
+                status,
+                headers,
+                body: serde_json::from_str(text.as_str()).unwrap_or(JSON::Null),
+            }),
+        }
     }
 }
