@@ -1,6 +1,9 @@
 use crate::context::{Context, Response};
 use crate::error::Error;
 use crate::types::timestamp::Timestamp;
+
+use anyhow::Result;
+use http::Method;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -177,22 +180,22 @@ impl Channel {
     pub async fn fetch_channel(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/channels/{}", id), None)
+    ) -> Result<Response> {
+        ctx.request(Method::GET, &format!("/v9/channels/{}", id), None)
             .await
     }
 
     pub async fn delete_channel(
         self,
         ctx: &mut MutexGuard<'_, Context>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::delete_channel_static(ctx, self.id).await
     }
     pub async fn delete_channel_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
-        ctx.request(http::Method::DELETE, &format!("/v9/channels/{}", id), None)
+    ) -> Result<Response> {
+        ctx.request(Method::DELETE, &format!("/v9/channels/{}", id), None)
             .await
     }
 
@@ -204,16 +207,16 @@ impl Channel {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         msg: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::send_message_static(ctx, self.id, msg).await
     }
     pub async fn send_message_static(
         ctx: &mut MutexGuard<'_, Context>,
         channel_id: Snowflake,
         msg: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::POST,
+            Method::POST,
             &format!("/v9/channels/{}/messages", channel_id),
             Some(msg),
         )
@@ -225,7 +228,7 @@ impl Channel {
         ctx: &mut MutexGuard<'_, Context>,
         limit: u64,
         before: Option<Snowflake>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_messages_static(ctx, self.id, limit, before).await
     }
     pub async fn fetch_messages_static(
@@ -233,7 +236,7 @@ impl Channel {
         channel_id: Snowflake,
         limit: u64,
         before: Option<Snowflake>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         if limit > 100 {
             return Err(Error::InvalidApiRequest("limit must be less than 100".to_string()).into());
         }
@@ -244,23 +247,23 @@ impl Channel {
             endpoint.push_str(&format!("&before={}", before));
         }
 
-        ctx.request(http::Method::GET, &endpoint, None).await
+        ctx.request(Method::GET, &endpoint, None).await
     }
 
     pub async fn fetch_message(
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_message_static(ctx, self.id, id).await
     }
     pub async fn fetch_message_static(
         ctx: &mut MutexGuard<'_, Context>,
         channel_id: Snowflake,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/channels/{}/messages/{}", channel_id, id),
             None,
         )
@@ -271,16 +274,16 @@ impl Channel {
         self,
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::delete_message_static(ctx, self.id, id).await
     }
     pub async fn delete_message_static(
         ctx: &mut MutexGuard<'_, Context>,
         channel_id: Snowflake,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::DELETE,
+            Method::DELETE,
             &format!("/v9/channels/{}/messages/{}", channel_id, id),
             None,
         )
@@ -292,7 +295,7 @@ impl Channel {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         msg: Value
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::edit_message_static(ctx, self.id, id, msg).await
     }
     pub async fn edit_message_static(
@@ -300,9 +303,9 @@ impl Channel {
         channel_id: Snowflake,
         id: Snowflake,
         msg: Value
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::PATCH,
+            Method::PATCH,
             &format!("/v9/channels/{}/messages/{}", channel_id, id),
             Some(msg)
         )
@@ -314,7 +317,7 @@ impl Channel {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         emoji: &str
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::add_reaction_static(ctx, self.id, id, emoji).await
     }
     pub async fn add_reaction_static(
@@ -322,9 +325,9 @@ impl Channel {
         channel_id: Snowflake,
         id: Snowflake,
         emoji: &str
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::PUT,
+            Method::PUT,
             &format!("/v9/channels/{}/messages/{}/reactions/{}/@me", channel_id, id, emoji),
             None
         )

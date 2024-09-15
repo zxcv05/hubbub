@@ -2,6 +2,9 @@ use crate::context::{Context, Response};
 use crate::error::Error;
 use crate::types::timestamp::Timestamp;
 use crate::types::user::{AvatarDecorationData, User};
+
+use anyhow::Result;
+use http::Method;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -179,15 +182,15 @@ impl Guild {
     pub async fn fetch_guild(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}", id), None)
+    ) -> Result<Response> {
+        ctx.request(Method::GET, &format!("/v9/guilds/{}", id), None)
             .await
     }
 
     // Very rarely likely to work
-    pub async fn delete_guild(self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+    pub async fn delete_guild(self, ctx: &mut MutexGuard<'_, Context>) -> Result<Response> {
         ctx.request(
-            http::Method::DELETE,
+            Method::DELETE,
             &format!("/v9/guilds/{}", self.id),
             None,
         )
@@ -201,9 +204,9 @@ impl Guild {
     pub async fn fetch_channels_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/channels", id),
             None,
         )
@@ -212,7 +215,7 @@ impl Guild {
     pub async fn fetch_channels(
         &self,
         ctx: &mut MutexGuard<'_, Context>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_channels_static(ctx, self.id).await
     }
 
@@ -220,9 +223,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         channel: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::POST,
+            Method::POST,
             &format!("/v9/guilds/{}/channels", id),
             Some(channel),
         )
@@ -232,7 +235,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         channel: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::create_channel_static(ctx, self.id, channel).await
     }
 
@@ -244,14 +247,14 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         limit: u64,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         if limit == 0 || limit > 1000 {
             return Err(
                 Error::InvalidApiRequest("limit must be between 1 and 1000".to_string()).into(),
             );
         }
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/members?limit={}", id, limit),
             None,
         )
@@ -261,7 +264,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         limit: u64,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_members_static(ctx, self.id, limit).await
     }
 
@@ -269,9 +272,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/members/{}", id, user_id),
             None,
         )
@@ -281,7 +284,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_member_static(ctx, self.id, user_id).await
     }
 
@@ -290,14 +293,14 @@ impl Guild {
         id: Snowflake,
         query: String,
         limit: u64,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         if limit == 0 || limit > 1000 {
             return Err(
                 Error::InvalidApiRequest("limit must be between 1 and 1000".to_string()).into(),
             );
         }
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!(
                 "/v9/guilds/{}/members/search?query={}&limit={}",
                 id, query, limit
@@ -311,7 +314,7 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         query: String,
         limit: u64,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::search_members_static(ctx, self.id, query, limit).await
     }
 
@@ -320,9 +323,9 @@ impl Guild {
         id: Snowflake,
         user_id: Snowflake,
         member: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::PATCH,
+            Method::PATCH,
             &format!("/v9/guilds/{}/members/{}", id, user_id),
             Some(member),
         )
@@ -333,7 +336,7 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         user_id: Snowflake,
         member: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::edit_member_static(ctx, self.id, user_id, member).await
     }
 
@@ -341,9 +344,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::DELETE,
+            Method::DELETE,
             &format!("/v9/guilds/{}/members/{}", id, user_id),
             None,
         )
@@ -353,7 +356,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::kick_member_static(ctx, self.id, user_id).await
     }
 
@@ -365,9 +368,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::PUT,
+            Method::PUT,
             &format!("/v9/guilds/{}/bans/{}", id, user_id),
             None,
         )
@@ -377,7 +380,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::ban_member_static(ctx, self.id, user_id).await
     }
 
@@ -385,9 +388,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::DELETE,
+            Method::DELETE,
             &format!("/v9/guilds/{}/bans/{}", id, user_id),
             None,
         )
@@ -397,18 +400,18 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::unban_member_static(ctx, self.id, user_id).await
     }
 
     pub async fn get_bans_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/bans", id), None)
+    ) -> Result<Response> {
+        ctx.request(Method::GET, &format!("/v9/guilds/{}/bans", id), None)
             .await
     }
-    pub async fn get_bans(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+    pub async fn get_bans(&self, ctx: &mut MutexGuard<'_, Context>) -> Result<Response> {
         Self::get_bans_static(ctx, self.id).await
     }
 
@@ -416,9 +419,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/bans/{}", id, user_id),
             None,
         )
@@ -428,7 +431,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         user_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::get_ban_static(ctx, self.id, user_id).await
     }
 
@@ -439,11 +442,11 @@ impl Guild {
     pub async fn fetch_roles_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
-        ctx.request(http::Method::GET, &format!("/v9/guilds/{}/roles", id), None)
+    ) -> Result<Response> {
+        ctx.request(Method::GET, &format!("/v9/guilds/{}/roles", id), None)
             .await
     }
-    pub async fn fetch_roles(&self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Response> {
+    pub async fn fetch_roles(&self, ctx: &mut MutexGuard<'_, Context>) -> Result<Response> {
         Self::fetch_roles_static(ctx, self.id).await
     }
 
@@ -451,9 +454,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         role: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::POST,
+            Method::POST,
             &format!("/v9/guilds/{}/roles", id),
             Some(role),
         )
@@ -463,7 +466,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         role: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::create_role_static(ctx, self.id, role).await
     }
 
@@ -472,9 +475,9 @@ impl Guild {
         id: Snowflake,
         role_id: Snowflake,
         role: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::PATCH,
+            Method::PATCH,
             &format!("/v9/guilds/{}/roles/{}", id, role_id),
             Some(role),
         )
@@ -485,7 +488,7 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         role_id: Snowflake,
         role: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::edit_role_static(ctx, self.id, role_id, role).await
     }
 
@@ -493,9 +496,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         role_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::DELETE,
+            Method::DELETE,
             &format!("/v9/guilds/{}/roles/{}", id, role_id),
             None,
         )
@@ -505,7 +508,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         role_id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::delete_role_static(ctx, self.id, role_id).await
     }
 
@@ -513,9 +516,9 @@ impl Guild {
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
         roles: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::PATCH,
+            Method::PATCH,
             &format!("/v9/guilds/{}/roles", id),
             Some(roles),
         )
@@ -525,7 +528,7 @@ impl Guild {
         &self,
         ctx: &mut MutexGuard<'_, Context>,
         roles: Value,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::edit_role_positions_static(ctx, self.id, roles).await
     }
 
@@ -536,9 +539,9 @@ impl Guild {
     pub async fn fetch_invites_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/invites", id),
             None,
         )
@@ -547,16 +550,16 @@ impl Guild {
     pub async fn fetch_invites(
         &self,
         ctx: &mut MutexGuard<'_, Context>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_invites_static(ctx, self.id).await
     }
 
     pub async fn fetch_welcome_screen_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/welcome-screen", id),
             None,
         )
@@ -565,16 +568,16 @@ impl Guild {
     pub async fn fetch_welcome_screen(
         &self,
         ctx: &mut MutexGuard<'_, Context>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_welcome_screen_static(ctx, self.id).await
     }
 
     pub async fn fetch_onboarding_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/onboarding", id),
             None,
         )
@@ -583,16 +586,16 @@ impl Guild {
     pub async fn fetch_onboarding(
         &self,
         ctx: &mut MutexGuard<'_, Context>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_onboarding_static(ctx, self.id).await
     }
 
     pub async fn fetch_vanity_url_static(
         ctx: &mut MutexGuard<'_, Context>,
         id: Snowflake,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         ctx.request(
-            http::Method::GET,
+            Method::GET,
             &format!("/v9/guilds/{}/vanity-url", id),
             None,
         )
@@ -601,7 +604,7 @@ impl Guild {
     pub async fn fetch_vanity_url(
         &self,
         ctx: &mut MutexGuard<'_, Context>,
-    ) -> anyhow::Result<Response> {
+    ) -> Result<Response> {
         Self::fetch_vanity_url_static(ctx, self.id).await
     }
 }
@@ -642,7 +645,7 @@ pub struct CachedGuild {
 }
 
 impl CachedGuild {
-    pub async fn into_guild(self, ctx: &mut MutexGuard<'_, Context>) -> anyhow::Result<Guild> {
+    pub async fn into_guild(self, ctx: &mut MutexGuard<'_, Context>) -> Result<Guild> {
         Ok(serde_json::from_value(
             Guild::fetch_guild(ctx, self.id).await?.body,
         )?)
