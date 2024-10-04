@@ -79,8 +79,8 @@ where
                 let mut lock = ws_ref.lock().await;
                 let seq = lock.sequence.clone();
                 match lock.send(DiscordMessage::new_heartbeat(seq)).await {
-                    Err(e) => log::warn!("Couldn't send heartbeat: {}", e),
-                    Ok(_) => {},
+                    Err(e) => log::warn!("Couldn't send heartbeat: {e}"),
+                    Ok(_) => log::trace!("Sent heartbeat successfully: {seq:?}"),
                 }
             }
         });
