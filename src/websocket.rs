@@ -1,4 +1,4 @@
-use crate::{context::ResumeInfo, error::Error, prelude::{Mutex, Arc}};
+use crate::{context::ResumeInfo, prelude::{Arc, Ctx, Mutex}};
 
 use anyhow::Result;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
@@ -23,6 +23,47 @@ pub struct DiscordMessage {
     pub event: Option<String>,
 }
 
+impl DiscordMessage {
+    pub fn new_heartbeat(seq: Option<u64>) -> Self {
+        Self {
+            op: 1,
+            data: match seq {
+                None => JSON::Null,
+                Some(s) => JSON::Number(s.into()),
+            },
+            seq: None,
+            event: None,
+        }
+    }
+
+    pub fn new_identify(token: &str) -> Self {
+        // Yeah the formatting is strange but it's to provide easy access
+        // to "token" and "client_build_number" without searching or scrolling
+        Self {
+            op: 2,
+            data: json!({
+                "token": token, "capabilities": 30717, "properties": { "os": "Windows", "browser": "Firefox", "device": "", "system_locale": "en-US", "browser_user_agent": "Mozilla/5.0 (Windows NT 10.0; rv:126.0) Gecko/20100101 Firefox/126.0", "browser_version": "126.0", "os_version": "", "referrer": "", "referring_domain": "", "referrer_current": "", "referring_domain_current": "", "release_channel": "stable",
+                "client_build_number": 327180, "client_event_source": JSON::Null, "design_id": 0 }, "presence": { "status": "unknown", "since": 0, "activities": [], "afk": false }, "compress": false, "client_state": { "guild_versions": {} }
+            }),
+            seq: None,
+            event: None,
+        }
+    }
+
+    pub fn new_resume(token: &str, seq: u64, info: &ResumeInfo) -> Self {
+        Self {
+            op: 6,
+            data: json!({
+                "token": token,
+                "session_id": info.id,
+                "seq": seq,
+            }),
+            seq: None,
+            event: None,
+        }
+    }
+}
+
 pub struct StreamCtrl {
     s: WS,
     rx: VecDeque<Message>,
@@ -43,33 +84,34 @@ impl StreamCtrl {
         let _rxq = Arc::new(Mutex::new(self.rx));
         let (mut tx, mut rx) = self.s.into_stream().split();
 
-        // TODO: I really hate this solution
-        // Two threads, constantly running and taking up resources
-
         let rxq = _rxq.clone();
         tokio::task::spawn(async move {
             log::trace!("Starting websocket read loop");
 
             loop {
-                let resp = match rx.try_next().await {
-                    Ok(v) => v,
-                    Err(e) => {
+                let msg = match rx.next().await {
+                    Some(r) => match r {
+                        Err(e) => {
+                            let mut rxq = rxq.lock().await;
+                            rxq.close().await.expect("Couldn't close sink");
+                            rxq.push_back(Message::Text(String::from(r#"{"op":255}"#)));
+                            log::error!("rxq: {e}");
+                            return;
+                        }
+                        Ok(m) => m,
+                    },
+                    None => {
                         let mut rxq = rxq.lock().await;
                         rxq.close().await.expect("Couldn't close sink");
-                        rxq.push_back(Message::Text(String::from(r#"{"op":255}"#)));
-                        log::error!("{e:?}");
+                        log::trace!("rxq closed because end-of-stream reached");
                         return;
                     }
                 };
 
-                if let Some(msg) = resp {
-                    log::trace!("<<\n{msg:?}");
+                log::trace!("<<\n{msg:?}");
 
-                    let mut rxq = rxq.lock().await;
-                    rxq.push_back(msg);
-                }
-
-                tokio::time::sleep(Duration::from_millis(5)).await;
+                let mut rxq = rxq.lock().await;
+                rxq.push_back(msg);
             }
         });
 
@@ -78,13 +120,10 @@ impl StreamCtrl {
             log::trace!("Starting websocket write loop");
 
             loop {
-                let mut txq = match txq.try_lock() {
-                    Ok(v) => v,
-                    Err(_) => {
-                        tokio::time::sleep(Duration::from_millis(5)).await;
-                        continue;
-                    }
-                };
+                tokio::time::sleep(Duration::from_millis(5)).await;
+                
+                let mut txq = txq.lock().await;
+                if txq.is_empty() { continue }
 
                 while let Some(msg) = txq.pop_front() {
                     log::trace!(">>\n{msg:?}");
@@ -98,8 +137,6 @@ impl StreamCtrl {
                 }
 
                 drop(txq);
-
-                tokio::time::sleep(Duration::from_millis(5)).await;
             }
         });
 
@@ -117,8 +154,6 @@ pub struct Websocket {
 
     pub heartbeat: u64,
     pub sequence: Option<u64>,
-
-    token: Option<String>,
 }
 
 impl Websocket {
@@ -147,7 +182,6 @@ impl Websocket {
 
         Ok(Self {
             ready: false,
-            token: None,
             heartbeat: 0,
             sequence: None,
             q: (tx, rx),
@@ -164,15 +198,10 @@ impl Websocket {
 
         Ok(Self {
             ready: false,
-            token: None,
             heartbeat: 0,
             sequence: Some(sequence),
             q: (tx, rx),
         })
-    }
-
-    pub fn token(&mut self, token: String) {
-        self.token = Some(token);
     }
 
     pub async fn send(&mut self, msg: DiscordMessage) -> Result<()> {
@@ -218,110 +247,35 @@ impl Websocket {
         Ok(Message::Text(serde_json::to_string(&msg)?))
     }
 
-    pub fn resume_packet(&self, info: &ResumeInfo) -> DiscordMessage {
-        DiscordMessage {
-            op: 6,
-            data: json!({
-                "token": self.token,
-                "session_id": info.id,
-                "seq": self.sequence
-            }),
-
-            seq: None,
-            event: None,
-        }
-    }
-
-    pub fn identify_packet(&self) -> DiscordMessage {
-        DiscordMessage {
-            op: 2,
-            data: json!({
-                "token": self.token,
-                "capabilities": 30717,
-                "properties": {
-                    "os": "Windows",
-                    "browser": "Firefox",
-                    "device": "",
-                    "system_locale": "en-US",
-                    "browser_user_agent": "Mozilla/5.0 (Windows NT 10.0; rv:126.0) Gecko/20100101 Firefox/126.0",
-                    "browser_version": "126.0",
-                    "os_version": "",
-                    "referrer": "",
-                    "referring_domain": "",
-                    "referrer_current": "",
-                    "referring_domain_current": "",
-                    "release_channel": "stable",
-                    "client_build_number": 327180, // TODO: reliable way to get up-to-date build number
-                    "client_event_source": JSON::Null,
-                    "design_id": 0
-                },
-                "presence": {
-                    "status": "unknown",
-                    "since": 0,
-                    "activities": [],
-                    "afk": false
-                },
-                "compress": false,
-                "client_state": {
-                    "guild_versions": {},
-                }
-            }),
-
-            seq: None,
-            event: None,
-        }
-    }
-
-    pub async fn initiate(&mut self) -> Result<()> {
-        if self.token.is_none() {
-            return Err(Error::NoTokenGiven.into());
-        }
-
-        log::debug!("Initiating connection");
-
+    async fn read_hello(&mut self) -> Result<()> {
         let hello = self.read().await?;
         self.heartbeat = hello.data["heartbeat_interval"]
             .as_u64()
             .expect("Invalid heartbeat interval");
 
-        self.heartbeat().await?;
+        self.send(DiscordMessage::new_heartbeat(None)).await?;
         let _ = self.read().await?;
 
         Ok(())
     }
 
-    pub async fn login(&mut self) -> Result<()> {
-        self.initiate().await?;
+    pub async fn login(&mut self, token: &str) -> Result<()> {
+        self.read_hello().await?;
 
         log::debug!("Sending identify packet");
-        self.send(self.identify_packet()).await?;
+        self.send(DiscordMessage::new_identify(token)).await?;
 
         Ok(())
     }
 
-    pub async fn resume(&mut self, info: &ResumeInfo) -> Result<()> {
-        self.initiate().await?;
+    pub async fn resume(&mut self, ctx: Ctx) -> Result<()> {
+        self.read_hello().await?;
 
         log::debug!("Sending resume packet");
-        self.send(self.resume_packet(info)).await?;
 
-        Ok(())
-    }
-
-    pub async fn heartbeat(&mut self) -> Result<()> {
-        self.send(DiscordMessage {
-            op: 1,
-            data: match self.sequence {
-                None => JSON::Null,
-                Some(i) => JSON::Number(i.into()),
-            },
-
-            seq: None,
-            event: None,
-        })
-        .await
-        .expect("Couldn't send heartbeat");
-        log::debug!("Sending heartbeat");
+        let ctx = ctx.lock().await;
+        let info = ctx.resume_info.as_ref().unwrap();
+        self.send(DiscordMessage::new_resume(ctx.auth.as_ref().unwrap(), self.sequence.unwrap(), info)).await?;
 
         Ok(())
     }

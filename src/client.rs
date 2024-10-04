@@ -35,8 +35,6 @@ where
     }
 
     pub async fn token(&mut self, token: String) -> Result<()> {
-        self.ws.lock().await.token(token.clone());
-
         let mut ctx = self.ctx.lock().await;
         ctx.set_auth(token);
 
@@ -57,7 +55,13 @@ where
     }
 
     pub async fn login(&mut self) -> Result<()> {
-        self.ws.lock().await.login().await?;
+        let ctx = self.ctx.lock().await;
+
+        if let Some(ref token) = ctx.auth {
+            self.ws.lock().await.login(token).await?;
+        } else {
+            return Err(anyhow::anyhow!(Error::NoTokenGiven));
+        }
         Ok(())
     }
 
@@ -73,7 +77,11 @@ where
                 i.as_mut().await;
 
                 let mut lock = ws_ref.lock().await;
-                lock.heartbeat().await.expect("Couldn't heartbeat");
+                let seq = lock.sequence.clone();
+                match lock.send(DiscordMessage::new_heartbeat(seq)).await {
+                    Err(e) => log::warn!("Couldn't send heartbeat: {}", e),
+                    Ok(_) => {},
+                }
             }
         });
 
@@ -103,7 +111,8 @@ where
                     }
                     1 => {
                         log::debug!("Gateway asked for heartbeat");
-                        ws.heartbeat().await?;
+                        let seq = ws.sequence.clone();
+                        ws.send(DiscordMessage::new_heartbeat(seq)).await?;
                     }
                     7 => {
                         log::debug!("Gateway asked for reconnect");
@@ -189,16 +198,18 @@ where
     F::Output: Send + 'static, Model: Send {
     pub async fn resume<'a>(&mut self) -> Result<()> {
         let mut ws = self.ws.lock().await;
-        let ctx = self.ctx.lock().await;
 
-        let seq = ws.sequence;
-        *ws = Websocket::new_with(
-            &(ctx.resume_info.as_ref().unwrap().url),
-            seq.unwrap(),
-        ).await?;
+        {
+            let ctx = self.ctx.lock().await;
+    
+            let seq = ws.sequence;
+            *ws = Websocket::new_with(
+                &(ctx.resume_info.as_ref().unwrap().url),
+                seq.unwrap(),
+            ).await?;
+        }
 
-        ws.token(ctx.auth.as_ref().unwrap().clone());
-        ws.resume(ctx.resume_info.as_ref().unwrap()).await?;
+        ws.resume(self.ctx.clone()).await?;
 
         Ok(())
     }
