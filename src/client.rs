@@ -7,7 +7,7 @@ use std::{cmp::max, collections::VecDeque, sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use crate::types::gateway::Ready;
 use crate::websocket::{DiscordMessage, Websocket};
-pub type Handler<F, M> = dyn Fn(Ctx, Ws, Model<M>, DiscordMessage) -> F;
+pub type Handler<F, M> = dyn Fn(Ctx, Ws, Model<M>, DiscordMessage) -> F + Send;
 
 pub struct Client<F, Model>
 where
@@ -201,7 +201,7 @@ where
 
         {
             let ctx = self.ctx.lock().await;
-    
+
             let seq = ws.sequence;
             *ws = Websocket::new_with(
                 &(ctx.resume_info.as_ref().unwrap().url),
@@ -214,5 +214,3 @@ where
         Ok(())
     }
 }
-
-
